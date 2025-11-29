@@ -1,15 +1,76 @@
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { BLOG_POSTS } from '../constants';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
 import ScrollReveal from '../components/ScrollReveal';
-import { ArrowLeft, Calendar, User, Clock, Share2, ArrowRight } from 'lucide-react';
+import Breadcrumbs from '../components/Breadcrumbs';
+import { supabase } from '../lib/supabaseClient';
+import { BlogPost as BlogPostType } from '../types';
+import { ArrowLeft, Calendar, User, Clock, Share2, ArrowRight, Tag, Loader2 } from 'lucide-react';
 
 const BlogPost: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const post = BLOG_POSTS.find(p => p.id === id);
+  
+  const [post, setPost] = useState<BlogPostType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [relatedPosts, setRelatedPosts] = useState<BlogPostType[]>([]);
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      // 1. Try to find in Static Constants first (faster)
+      const staticPost = BLOG_POSTS.find(p => p.id === id);
+      if (staticPost) {
+        setPost(staticPost);
+        setLoading(false);
+        // Setup related
+        setupRelated(staticPost, BLOG_POSTS);
+        return;
+      }
+
+      // 2. If not found, check Supabase
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if (error || !data) {
+          throw new Error("Post not found");
+        }
+        
+        setPost(data as BlogPostType);
+        
+        // Fetch generic recent posts for related section since we don't have full list here easily
+        const { data: recent } = await supabase.from('posts').select('*').limit(3);
+        setupRelated(data as BlogPostType, recent as BlogPostType[] || []);
+
+      } catch (err) {
+        console.error("Error loading post", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPost();
+  }, [id]);
+
+  const setupRelated = (currentPost: BlogPostType, allPosts: BlogPostType[]) => {
+    const related = allPosts
+      .filter(p => p.id !== currentPost.id)
+      .slice(0, 3);
+    setRelatedPosts(related);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-brand-600" />
+      </div>
+    );
+  }
 
   if (!post) {
     return (
@@ -20,16 +81,6 @@ const BlogPost: React.FC = () => {
     );
   }
 
-  // Smart related posts logic: prioritize same category, fill with others
-  const relatedPosts = BLOG_POSTS
-    .filter(p => p.id !== post.id)
-    .sort((a, b) => {
-      if (a.category === post.category && b.category !== post.category) return -1;
-      if (a.category !== post.category && b.category === post.category) return 1;
-      return 0;
-    })
-    .slice(0, 3);
-
   return (
     <div className="pt-24 pb-20 bg-white">
       <SEO 
@@ -38,6 +89,15 @@ const BlogPost: React.FC = () => {
       />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Breadcrumbs 
+           items={[
+             { label: 'Home', path: '/' }, 
+             { label: 'Insights', path: '/blog' },
+             { label: post.title }
+           ]} 
+           className="mb-6"
+        />
+
         <Button 
           variant="ghost" 
           onClick={() => navigate('/blog')} 
@@ -81,7 +141,8 @@ const BlogPost: React.FC = () => {
             <img 
               src={post.image} 
               alt={post.title} 
-              className="w-full h-auto object-cover"
+              className="w-full h-auto object-cover max-h-[500px]"
+              onError={(e) => (e.currentTarget.src = 'https://picsum.photos/800/400')}
             />
           </div>
 
@@ -89,6 +150,24 @@ const BlogPost: React.FC = () => {
             className="prose prose-lg prose-slate max-w-none prose-headings:font-bold prose-a:text-brand-600 hover:prose-a:text-brand-700 prose-img:rounded-xl"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
+
+          {/* Tags Section */}
+          {post.tags && post.tags.length > 0 && (
+            <div className="mt-10 flex items-start">
+               <Tag size={18} className="text-slate-400 mt-1.5 mr-3 flex-shrink-0" />
+               <div className="flex flex-wrap gap-2">
+                 {post.tags.map((tag, idx) => (
+                   <Link 
+                     key={idx} 
+                     to={`/blog?tag=${tag}`}
+                     className="bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-700 px-3 py-1 rounded-md text-sm transition-colors"
+                   >
+                     #{tag}
+                   </Link>
+                 ))}
+               </div>
+            </div>
+          )}
         </ScrollReveal>
 
         {/* Related Posts Section */}
@@ -97,7 +176,7 @@ const BlogPost: React.FC = () => {
             <h3 className="text-2xl font-bold text-slate-900 mb-8">Related Articles</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {relatedPosts.map((related, idx) => (
-                <ScrollReveal key={related.id} delay={idx * 0.1}>
+                <ScrollReveal key={related.id || idx} delay={idx * 0.1}>
                   <div 
                     className="group cursor-pointer flex flex-col h-full bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-slate-100"
                     onClick={() => navigate(`/blog/${related.id}`)}
@@ -107,6 +186,7 @@ const BlogPost: React.FC = () => {
                         src={related.image} 
                         alt={related.title} 
                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => (e.currentTarget.src = 'https://picsum.photos/800/400')}
                       />
                       <div className="absolute top-3 left-3">
                         <span className="bg-white/90 backdrop-blur-sm text-brand-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">

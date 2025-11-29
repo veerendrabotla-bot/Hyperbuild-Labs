@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SectionHeading from '../components/SectionHeading';
 import Button from '../components/Button';
-import { Mail, Phone, MapPin, MessageCircle, Calendar, AlertCircle } from 'lucide-react';
-import { FAQS, WHATSAPP_LINK } from '../constants';
+import { Mail, Phone, MapPin, MessageCircle, Calendar, AlertCircle, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { FAQS, WHATSAPP_LINK, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_AUTO_REPLY_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../constants';
 import SEO from '../components/SEO';
+import { supabase } from '../lib/supabaseClient';
+import emailjs from '@emailjs/browser';
+import BookingSystem from '../components/BookingSystem';
+import { useToast } from '../contexts/ToastContext';
 
 interface FormErrors {
   name?: string;
   email?: string;
   message?: string;
+  general?: string;
 }
 
 interface FormTouched {
@@ -18,10 +23,14 @@ interface FormTouched {
 }
 
 const Contact: React.FC = () => {
+  const { success, error: showError } = useToast();
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     service: 'Web Development',
+    budget: '$5k - $10k',
+    timeline: 'Within 1 month',
     message: ''
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -30,7 +39,21 @@ const Contact: React.FC = () => {
     email: false,
     message: false
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
+  
+  // Accordion state
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Initialize EmailJS
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  }, []);
+
+  const toggleFaq = (index: number) => {
+    setOpenFaqIndex(openFaqIndex === index ? null : index);
+  };
 
   const validateField = (name: string, value: string): string | undefined => {
     switch (name) {
@@ -82,7 +105,7 @@ const Contact: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate all fields
@@ -103,11 +126,75 @@ const Contact: React.FC = () => {
     });
 
     if (!nameError && !emailError && !messageError) {
-      // Simulate form submission
-      console.log('Form Submitted:', formData);
-      setSubmitted(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setIsSubmitting(true);
+      
+      try {
+        // 1. Insert data into Supabase
+        const { error: supabaseError } = await supabase
+          .from('leads')
+          .insert([
+            {
+              name: formData.name,
+              email: formData.email,
+              service: formData.service,
+              budget: formData.budget,
+              timeline: formData.timeline,
+              message: formData.message,
+              status: 'new' // Default status
+            }
+          ]);
+
+        if (supabaseError) throw supabaseError;
+
+        // 2. Send Emails via EmailJS
+        if (EMAILJS_SERVICE_ID !== 'service_placeholder') {
+          // A. Admin Notification
+          await emailjs.send(
+            EMAILJS_SERVICE_ID,
+            EMAILJS_TEMPLATE_ID,
+            {
+              from_name: formData.name,
+              from_email: formData.email,
+              service: formData.service,
+              budget: formData.budget,
+              timeline: formData.timeline,
+              message: formData.message,
+              to_name: 'Admin', 
+            }
+          );
+
+          // B. User Confirmation (Auto-reply)
+          if (EMAILJS_AUTO_REPLY_TEMPLATE_ID !== 'template_auto_reply_placeholder') {
+            await emailjs.send(
+              EMAILJS_SERVICE_ID,
+              EMAILJS_AUTO_REPLY_TEMPLATE_ID,
+              {
+                to_name: formData.name,
+                to_email: formData.email,
+                service: formData.service,
+              }
+            );
+          }
+        }
+
+        success("Message sent successfully! We'll be in touch soon.");
+        setSubmitted(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      } catch (err: any) {
+        console.error('Error submitting form:', err);
+        showError('Something went wrong. Please try again later.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
+  };
+
+  const handleReset = () => {
+    setSubmitted(false);
+    setFormData({ name: '', email: '', service: 'Web Development', budget: '$5k - $10k', timeline: 'Within 1 month', message: '' });
+    setTouched({ name: false, email: false, message: false });
+    setErrors({});
   };
 
   const getInputClasses = (fieldName: keyof FormErrors) => {
@@ -127,19 +214,31 @@ const Contact: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Schedule Call Banner */}
-        <div className="bg-gradient-to-r from-brand-600 to-brand-800 rounded-2xl p-8 mb-16 text-white flex flex-col md:flex-row items-center justify-between shadow-xl">
-          <div className="mb-6 md:mb-0 md:mr-8">
-             <div className="flex items-center mb-2">
-                <Calendar className="w-6 h-6 mr-3 text-brand-200" aria-hidden="true" />
-                <h3 className="text-2xl font-bold">Skip the email tag.</h3>
-             </div>
-             <p className="text-brand-100 max-w-xl">
-               Ready to get started? Book a free 15-minute discovery call directly with our lead engineer to discuss your project feasibility.
-             </p>
+        <div className="bg-gradient-to-r from-brand-600 to-brand-800 rounded-2xl p-8 mb-16 text-white shadow-xl">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-6 md:mb-0">
+            <div className="mb-6 md:mb-0 md:mr-8">
+               <div className="flex items-center mb-2">
+                  <Calendar className="w-6 h-6 mr-3 text-brand-200" aria-hidden="true" />
+                  <h3 className="text-2xl font-bold">Skip the email tag.</h3>
+               </div>
+               <p className="text-brand-100 max-w-xl">
+                 Ready to get started? Book a free 15-minute discovery call directly with our lead engineer.
+               </p>
+            </div>
+            <button 
+              onClick={() => setShowBooking(!showBooking)}
+              className="flex-shrink-0 bg-white text-brand-700 hover:bg-brand-50 font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
+            >
+               {showBooking ? 'Hide Calendar' : 'Schedule Discovery Call'}
+            </button>
           </div>
-          <a href="#" className="flex-shrink-0 bg-white text-brand-700 hover:bg-brand-50 font-bold py-3 px-8 rounded-lg transition-colors shadow-lg">
-             Schedule Discovery Call
-          </a>
+          
+          {/* Booking Widget */}
+          {showBooking && (
+            <div className="mt-8 animate-fadeIn">
+              <BookingSystem />
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
@@ -147,29 +246,34 @@ const Contact: React.FC = () => {
           {/* Contact Form */}
           <div>
             <SectionHeading 
-              title="Send us a Message" 
-              subtitle="Fill out the form below or message us on WhatsApp for a quick response."
+              title="Request a Quote" 
+              subtitle="Tell us about your project, budget, and timeline. We'll get back to you with a proposal."
               centered={false}
             />
             
             {submitted ? (
-              <div className="bg-green-50 border border-green-200 text-green-700 p-8 rounded-xl text-center" role="alert">
-                <h3 className="text-2xl font-bold mb-2">Message Sent!</h3>
-                <p>Thanks for reaching out, {formData.name}. We'll get back to you within 24 hours.</p>
+              <div className="bg-green-50 border border-green-200 text-green-700 p-8 rounded-xl text-center shadow-lg" role="alert">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold mb-2">Message Received!</h3>
+                <p className="mb-6">Thanks for reaching out, {formData.name}. We've sent a confirmation to your email and will be in touch within 24 hours.</p>
                 <button 
-                  onClick={() => {
-                    setSubmitted(false);
-                    setFormData({ name: '', email: '', service: 'Web Development', message: '' });
-                    setTouched({ name: false, email: false, message: false });
-                    setErrors({});
-                  }}
-                  className="mt-6 text-sm font-bold underline focus:outline-none focus:ring-2 focus:ring-green-500 rounded p-1"
+                  onClick={handleReset}
+                  className="text-brand-600 font-bold hover:text-brand-800 underline focus:outline-none"
                 >
-                  Send another message
+                  Submit another request
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-2xl shadow-lg border border-slate-100">
+                {errors.general && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-center">
+                    <AlertCircle size={16} className="mr-2" />
+                    {errors.general}
+                  </div>
+                )}
+
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                   <input 
@@ -183,6 +287,7 @@ const Contact: React.FC = () => {
                     placeholder="John Doe"
                     aria-invalid={!!errors.name}
                     aria-describedby={errors.name ? "name-error" : undefined}
+                    disabled={isSubmitting}
                   />
                   {errors.name && touched.name && (
                     <div id="name-error" className="flex items-center mt-1.5 text-red-500 text-sm animate-fadeIn">
@@ -205,6 +310,7 @@ const Contact: React.FC = () => {
                     placeholder="john@company.com"
                     aria-invalid={!!errors.email}
                     aria-describedby={errors.email ? "email-error" : undefined}
+                    disabled={isSubmitting}
                   />
                   {errors.email && touched.email && (
                     <div id="email-error" className="flex items-center mt-1.5 text-red-500 text-sm animate-fadeIn">
@@ -221,6 +327,7 @@ const Contact: React.FC = () => {
                     name="service"
                     value={formData.service}
                     onChange={handleChange}
+                    disabled={isSubmitting}
                     className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-shadow bg-white"
                   >
                     <option>Web Development</option>
@@ -229,6 +336,42 @@ const Contact: React.FC = () => {
                     <option>Automation</option>
                     <option>Branding & Design</option>
                   </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="budget" className="block text-sm font-medium text-slate-700 mb-1">Estimated Budget</label>
+                    <select 
+                      id="budget"
+                      name="budget"
+                      value={formData.budget}
+                      onChange={handleChange}
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-shadow bg-white"
+                    >
+                      <option>&lt; $1k</option>
+                      <option>$1k - $5k</option>
+                      <option>$5k - $10k</option>
+                      <option>$10k - $25k</option>
+                      <option>$25k+</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="timeline" className="block text-sm font-medium text-slate-700 mb-1">Timeline</label>
+                    <select 
+                      id="timeline"
+                      name="timeline"
+                      value={formData.timeline}
+                      onChange={handleChange}
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-shadow bg-white"
+                    >
+                      <option>ASAP</option>
+                      <option>Within 1 month</option>
+                      <option>1-3 months</option>
+                      <option>3 months+</option>
+                    </select>
+                  </div>
                 </div>
                 
                 <div>
@@ -244,6 +387,7 @@ const Contact: React.FC = () => {
                     placeholder="Tell us a bit about your project goals..."
                     aria-invalid={!!errors.message}
                     aria-describedby={errors.message ? "message-error" : undefined}
+                    disabled={isSubmitting}
                   ></textarea>
                   {errors.message && touched.message && (
                     <div id="message-error" className="flex items-center mt-1.5 text-red-500 text-sm animate-fadeIn">
@@ -252,14 +396,18 @@ const Contact: React.FC = () => {
                     </div>
                   )}
                 </div>
-                
-                <Button type="submit" className="w-full" size="lg">Send Message</Button>
+
+                <div className="flex flex-col items-center sm:items-start">
+                   <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
+                     {isSubmitting ? 'Sending...' : 'Submit Request'}
+                   </Button>
+                </div>
               </form>
             )}
           </div>
 
           {/* Contact Info & FAQ */}
-          <div className="flex flex-col justify-center">
+          <div className="flex flex-col justify-start">
             <div className="bg-secondary-900 text-white p-8 rounded-2xl mb-12 shadow-xl">
               <h3 className="text-xl font-bold mb-6">Contact Information</h3>
               <div className="space-y-6">
@@ -293,14 +441,27 @@ const Contact: React.FC = () => {
               </div>
             </div>
 
-            {/* FAQ Preview */}
+            {/* FAQ Accordion */}
             <div>
               <h3 className="text-2xl font-bold mb-6">Frequently Asked Questions</h3>
               <div className="space-y-4">
-                {FAQS.slice(0, 3).map((faq, idx) => (
-                  <div key={idx} className="border-b border-slate-200 pb-4">
-                    <h4 className="font-semibold text-slate-900 mb-2">{faq.question}</h4>
-                    <p className="text-slate-600 text-sm">{faq.answer}</p>
+                {FAQS.map((faq, idx) => (
+                  <div key={idx} className="border-b border-slate-200 pb-2">
+                    <button 
+                      onClick={() => toggleFaq(idx)}
+                      className="w-full flex justify-between items-center py-4 text-left focus:outline-none focus:text-brand-600 group"
+                      aria-expanded={openFaqIndex === idx}
+                    >
+                      <h4 className="font-semibold text-slate-900 group-hover:text-brand-600 transition-colors pr-4">{faq.question}</h4>
+                      <ChevronDown 
+                        className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openFaqIndex === idx ? 'rotate-180 text-brand-500' : ''}`} 
+                      />
+                    </button>
+                    <div 
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaqIndex === idx ? 'max-h-40 opacity-100 mb-4' : 'max-h-0 opacity-0'}`}
+                    >
+                      <p className="text-slate-600 text-sm leading-relaxed">{faq.answer}</p>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -15,6 +15,16 @@ import { Service, Project, PricingTier, Testimonial, FaqItem, BlogPost } from '.
 export const COMPANY_NAME = "HyperBuild Labs";
 export const WHATSAPP_LINK = "https://wa.me/1234567890"; // Placeholder
 
+// EmailJS Configuration (Placeholders - Update with your real keys from emailjs.com)
+export const EMAILJS_SERVICE_ID = "service_placeholder"; 
+export const EMAILJS_TEMPLATE_ID = "template_placeholder"; // Admin Notification
+export const EMAILJS_AUTO_REPLY_TEMPLATE_ID = "template_auto_reply_placeholder"; // User Confirmation
+export const EMAILJS_PUBLIC_KEY = "public_key_placeholder";
+
+// Supabase Configuration
+export const SUPABASE_URL = "https://wdramugnkamysedaxnjm.supabase.co";
+export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkcmFtdWdua2FteXNlZGF4bmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzOTkyNzksImV4cCI6MjA3OTk3NTI3OX0.EQ-Fh5A5QT9atNT7JqEBFyLkSidmaC6TwGbkT_I7j9c";
+
 export const SERVICES: Service[] = [
   {
     id: 'ai-chatbots',
@@ -219,6 +229,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: 'Oct 12, 2024',
     readTime: '5 min read',
     image: 'https://picsum.photos/id/3/800/400',
+    tags: ['AI Agents', 'Customer Service', 'Automation', 'LLMs'],
     content: `
       <p>The era of "Sorry, I didn't get that" is over. We are entering the age of the Autonomous Agent.</p>
       <h3>What changed?</h3>
@@ -243,6 +254,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: 'Sep 28, 2024',
     readTime: '7 min read',
     image: 'https://picsum.photos/id/180/800/400',
+    tags: ['Web Performance', 'Next.js', 'SEO', 'React'],
     content: `
       <p>We've all been there. You click a link, stare at a white screen for 3 seconds, and hit the back button. As a business owner, that "back button" is costing you thousands.</p>
       <h3>The Metrics That Matter</h3>
@@ -265,6 +277,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: 'Sep 15, 2024',
     readTime: '6 min read',
     image: 'https://picsum.photos/id/60/800/400',
+    tags: ['Strategy', 'No-Code', 'Scalability', 'Enterprise'],
     content: `
       <p>The "No-Code" movement is fantastic for MVPs. But when you hit scale, you hit walls.</p>
       <h3>The Ceiling of No-Code</h3>

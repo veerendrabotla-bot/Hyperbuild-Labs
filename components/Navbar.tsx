@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Rocket } from 'lucide-react';
+import { Menu, X, Rocket, Search } from 'lucide-react';
 import { COMPANY_NAME, WHATSAPP_LINK } from '../constants';
 import Button from './Button';
 
@@ -22,6 +22,10 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     setIsOpen(false);
   }, [location]);
+
+  const triggerSearch = () => {
+    window.dispatchEvent(new Event('open-search'));
+  };
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -57,7 +61,7 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex space-x-8 items-center">
+          <div className="hidden md:flex space-x-6 items-center">
             {navLinks.map((link) => (
               <NavLink
                 key={link.name}
@@ -70,10 +74,19 @@ const Navbar: React.FC = () => {
                 {link.name}
               </NavLink>
             ))}
+            
+            <button 
+              onClick={triggerSearch} 
+              className="text-slate-500 hover:text-brand-600 p-2 rounded-full hover:bg-slate-100 transition-colors"
+              aria-label="Search"
+            >
+              <Search size={20} />
+            </button>
+
             <Button 
               size="sm" 
               onClick={() => navigate('/contact')}
-              className="ml-4"
+              className="ml-2"
               aria-label="Book a consultation"
             >
               Book Consultation
@@ -81,7 +94,15 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center gap-4">
+            <button 
+              onClick={triggerSearch} 
+              className="text-slate-600 hover:text-slate-900"
+              aria-label="Search"
+            >
+              <Search size={22} />
+            </button>
+            
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 rounded-md p-1"

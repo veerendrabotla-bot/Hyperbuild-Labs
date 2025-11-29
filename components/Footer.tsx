@@ -9,9 +9,9 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-secondary-900 text-slate-300 pt-16 pb-8 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
           {/* Brand Column */}
-          <div>
+          <div className="sm:col-span-2 lg:col-span-1">
             <div 
               className="flex items-center mb-6 cursor-pointer" 
               onClick={() => navigate('/')}
@@ -31,9 +31,9 @@ const Footer: React.FC = () => {
               Transforming businesses with next-generation AI solutions, web development, and automation systems. Build the future with us.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-slate-400 hover:text-white transition-colors" aria-label="Follow us on Twitter"><Twitter size={20} aria-hidden="true" /></a>
-              <a href="#" className="text-slate-400 hover:text-white transition-colors" aria-label="Connect with us on LinkedIn"><Linkedin size={20} aria-hidden="true" /></a>
-              <a href="#" className="text-slate-400 hover:text-white transition-colors" aria-label="Follow us on Instagram"><Instagram size={20} aria-hidden="true" /></a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="Follow us on Twitter"><Twitter size={20} aria-hidden="true" /></a>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="Connect with us on LinkedIn"><Linkedin size={20} aria-hidden="true" /></a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="Follow us on Instagram"><Instagram size={20} aria-hidden="true" /></a>
             </div>
           </div>
 
@@ -85,8 +85,9 @@ const Footer: React.FC = () => {
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
           <p>&copy; {new Date().getFullYear()} {COMPANY_NAME}. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+            <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link to="/admin/login" className="hover:text-white transition-colors opacity-50 hover:opacity-100">Admin</Link>
           </div>
         </div>
       </div>

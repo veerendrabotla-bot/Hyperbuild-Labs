@@ -45,6 +45,7 @@ export interface Testimonial {
   company: string;
   content: string;
   avatar: string;
+  companyLogo?: string;
 }
 
 export interface FaqItem {
@@ -62,4 +63,72 @@ export interface BlogPost {
   readTime: string;
   category: string;
   image: string;
+  tags: string[];
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+}
+
+export interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  service: string;
+  budget?: string;
+  timeline?: string;
+  message: string;
+  status: 'new' | 'contacted' | 'closed';
+  created_at: string;
+}
+
+export interface Appointment {
+  id: string;
+  name: string;
+  email: string;
+  date: string; // ISO String
+  notes?: string;
+  status: 'confirmed' | 'cancelled' | 'completed';
+  created_at: string;
+}
+
+export interface SearchResult {
+  id: string;
+  title: string;
+  type: 'service' | 'project' | 'blog';
+  description: string;
+  link: string;
+}
+
+// -- OPERATIONS TYPES --
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'todo' | 'in-progress' | 'review' | 'done';
+  priority: 'low' | 'medium' | 'high';
+  assigned_to?: string;
+  due_date?: string;
+  created_at: string;
+}
+
+export interface Invoice {
+  id: string;
+  client_name: string;
+  client_email?: string;
+  amount: number;
+  status: 'draft' | 'sent' | 'paid' | 'overdue';
+  due_date?: string;
+  created_at: string;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'editor' | 'viewer';
+  avatar?: string;
+  created_at: string;
 }
