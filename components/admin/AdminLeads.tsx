@@ -104,7 +104,8 @@ const AdminLeads: React.FC = () => {
 
   const filteredLeads = sortedLeads.filter(lead => 
     lead.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    lead.email.toLowerCase().includes(searchQuery.toLowerCase())
+    lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (lead.phone && lead.phone.includes(searchQuery))
   );
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -133,7 +134,7 @@ const AdminLeads: React.FC = () => {
         <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between bg-slate-50/50 gap-4">
             <div className="relative w-full md:w-auto md:min-w-[300px]">
               <Input 
-                placeholder="Search leads by name or email..."
+                placeholder="Search by name, email, or phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 icon={<Search size={16} />}

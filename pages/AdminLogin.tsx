@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
-import { Rocket, Lock, Mail, AlertCircle } from 'lucide-react';
+import { Rocket, Lock, Mail, AlertCircle, HelpCircle } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -102,9 +102,12 @@ const AdminLogin: React.FC = () => {
               Log In
             </Button>
             
-            <p className="text-xs text-center text-slate-400 mt-4">
-              Don't have an account? Ask the system administrator to create one in Supabase.
-            </p>
+            <div className="bg-slate-50 p-4 rounded-lg mt-6 text-xs text-slate-500 text-center border border-slate-100">
+              <p className="flex items-center justify-center font-semibold mb-1 text-slate-700">
+                <HelpCircle size={12} className="mr-1" /> Login Issues?
+              </p>
+              If you are a new team member, ask the Admin to invite your email via the Supabase Dashboard so you can set your password.
+            </div>
         </form>
       </div>
     </div>
