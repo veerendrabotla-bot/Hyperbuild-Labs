@@ -32,21 +32,21 @@ const AdminHome: React.FC = () => {
     fetchData();
   }, []);
 
-  // Calculate Metrics
-  const totalLeads = leads.length;
-  const newLeads = leads.filter(l => l.status === 'new').length;
+  // Calculate Metrics safely
+  const totalLeads = leads?.length || 0;
+  const newLeads = leads?.filter(l => l.status === 'new').length || 0;
   
-  // Financial Metrics
-  const revenueCollected = invoices
-    .filter(i => i.status === 'paid')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
+  // Financial Metrics with safety checks
+  const revenueCollected = (invoices || [])
+    .filter(i => i?.status === 'paid')
+    .reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0);
 
-  const pendingInvoiceAmount = invoices
-    .filter(i => i.status === 'sent')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const pendingInvoiceAmount = (invoices || [])
+    .filter(i => i?.status === 'sent')
+    .reduce((acc, curr) => acc + (Number(curr?.amount) || 0), 0);
 
   // Estimate Pipeline Value (Naive calculation based on budget string)
-  const pipelineValue = leads.reduce((acc, lead) => {
+  const pipelineValue = (leads || []).reduce((acc, lead) => {
     if (!lead.budget || lead.status === 'closed') return acc; // Don't count closed deals in pipeline
     const match = lead.budget.match(/\$(\d+)k/); 
     if (match && match[1]) {
@@ -87,7 +87,7 @@ const AdminHome: React.FC = () => {
           </div>
           <div className="mt-4 flex items-center text-xs text-green-100">
              <CheckCircle size={12} className="mr-1" />
-             {invoices.filter(i => i.status === 'paid').length} Paid Invoices
+             {(invoices || []).filter(i => i.status === 'paid').length} Paid Invoices
           </div>
         </Card>
 
@@ -132,7 +132,7 @@ const AdminHome: React.FC = () => {
             <div>
               <p className="text-slate-500 text-sm font-medium mb-1">Upcoming Calls</p>
               <h3 className="text-3xl font-bold text-slate-900">
-                {appointments.filter(a => new Date(a.date) > new Date() && a.status !== 'cancelled').length}
+                {(appointments || []).filter(a => new Date(a.date) > new Date() && a.status !== 'cancelled').length}
               </h3>
             </div>
             <div className="bg-purple-100 p-2 rounded-lg">
@@ -154,7 +154,7 @@ const AdminHome: React.FC = () => {
               </button>
             </div>
             <div className="divide-y divide-slate-100">
-              {leads.slice(0, 5).map(lead => (
+              {(leads || []).slice(0, 5).map(lead => (
                 <div key={lead.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                   <div className="flex items-center">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 text-sm font-bold ${
@@ -175,7 +175,7 @@ const AdminHome: React.FC = () => {
                   </div>
                 </div>
               ))}
-              {leads.length === 0 && <div className="p-8 text-center text-slate-500 text-sm">No leads yet.</div>}
+              {leads?.length === 0 && <div className="p-8 text-center text-slate-500 text-sm">No leads yet.</div>}
             </div>
           </Card>
         </div>
@@ -187,7 +187,7 @@ const AdminHome: React.FC = () => {
               <h3 className="font-bold text-slate-900">Upcoming Appointments</h3>
             </div>
             <div className="p-4 space-y-3">
-              {appointments
+              {(appointments || [])
                 .filter(a => new Date(a.date) > new Date() && a.status !== 'cancelled')
                 .slice(0, 4)
                 .map(apt => (
@@ -205,7 +205,7 @@ const AdminHome: React.FC = () => {
                      </div>
                   </div>
               ))}
-              {appointments.filter(a => new Date(a.date) > new Date() && a.status !== 'cancelled').length === 0 && (
+              {(appointments || []).filter(a => new Date(a.date) > new Date() && a.status !== 'cancelled').length === 0 && (
                 <div className="text-center py-8 text-slate-400 text-sm">
                   No upcoming calls.
                 </div>

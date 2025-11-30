@@ -8,9 +8,11 @@ import Button from '../components/Button';
 import SEO from '../components/SEO';
 import ScrollReveal from '../components/ScrollReveal';
 import { SERVICES, PORTFOLIO, TESTIMONIALS } from '../constants';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const { settings } = useSiteSettings();
   const featuredServices = SERVICES.slice(0, 3);
   const featuredProjects = PORTFOLIO.slice(0, 2);
 
@@ -18,7 +20,7 @@ const Home: React.FC = () => {
     <div className="flex flex-col w-full">
       <SEO 
         title="AI & Web Development Agency" 
-        description="HyperBuild Labs is a premier AI and Web Development agency. We build enterprise-grade websites, e-commerce platforms, and custom AI automation systems." 
+        description={`${settings.company_name} is a premier AI and Web Development agency. We build enterprise-grade websites, e-commerce platforms, and custom AI automation systems.`} 
       />
 
       {/* Hero Section */}
@@ -33,14 +35,13 @@ const Home: React.FC = () => {
           
           <ScrollReveal delay={0.2}>
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 mb-6">
-              AI-Powered Websites & <br className="hidden md:block" />
-              <span className="gradient-text">Automation Systems</span>
+              {settings.hero_title}
             </h1>
           </ScrollReveal>
 
           <ScrollReveal delay={0.3}>
             <p className="max-w-2xl mx-auto text-xl text-slate-600 mb-10 leading-relaxed">
-              We build enterprise-grade digital experiences, e-commerce platforms, and custom AI agents that grow your business on autopilot.
+              {settings.hero_subtitle}
             </p>
           </ScrollReveal>
           
@@ -198,7 +199,7 @@ const Home: React.FC = () => {
                <Button variant="secondary" size="lg" onClick={() => navigate('/contact')}>
                  Get Your Free Quote
                </Button>
-               <a href="https://wa.me/1234567890" target="_blank" rel="noopener noreferrer">
+               <a href={settings.whatsapp_link} target="_blank" rel="noopener noreferrer">
                   <button className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-brand-600 font-bold py-3.5 px-8 rounded-lg transition-colors w-full sm:w-auto">
                     Chat on WhatsApp
                   </button>

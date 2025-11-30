@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import SectionHeading from '../components/SectionHeading';
 import Button from '../components/Button';
 import { Mail, Phone, MapPin, MessageCircle, Calendar, AlertCircle, ChevronDown, CheckCircle2 } from 'lucide-react';
-import { FAQS, WHATSAPP_LINK, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_AUTO_REPLY_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../constants';
+import { FAQS, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_AUTO_REPLY_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../constants';
 import SEO from '../components/SEO';
 import { supabase } from '../lib/supabaseClient';
 import emailjs from '@emailjs/browser';
 import BookingSystem from '../components/BookingSystem';
 import { useToast } from '../contexts/ToastContext';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 
 interface FormErrors {
   name?: string;
   email?: string;
+  phone?: string;
   message?: string;
   general?: string;
 }
@@ -19,15 +21,18 @@ interface FormErrors {
 interface FormTouched {
   name: boolean;
   email: boolean;
+  phone: boolean;
   message: boolean;
 }
 
 const Contact: React.FC = () => {
   const { success, error: showError } = useToast();
+  const { settings } = useSiteSettings();
   
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     service: 'Web Development',
     budget: '$5k - $10k',
     timeline: 'Within 1 month',
@@ -37,17 +42,16 @@ const Contact: React.FC = () => {
   const [touched, setTouched] = useState<FormTouched>({
     name: false,
     email: false,
+    phone: false,
     message: false
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   
-  // Accordion state
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    // Initialize EmailJS
     emailjs.init(EMAILJS_PUBLIC_KEY);
   }, []);
 
@@ -65,6 +69,9 @@ const Contact: React.FC = () => {
         if (!value.trim()) return 'Email is required';
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
         return undefined;
+      case 'phone':
+        if (value.trim() && !/^\+?[\d\s-]{10,}$/.test(value.trim())) return 'Please enter a valid phone number';
+        return undefined;
       case 'message':
         if (!value.trim()) return 'Message is required';
         if (value.trim().length < 10) return 'Message must be at least 10 characters';
@@ -81,7 +88,6 @@ const Contact: React.FC = () => {
       [name]: value
     }));
 
-    // Real-time validation if the field has been touched
     if (touched[name as keyof FormTouched]) {
       const error = validateField(name, value);
       setErrors(prev => ({
@@ -108,53 +114,54 @@ const Contact: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate all fields
     const nameError = validateField('name', formData.name);
     const emailError = validateField('email', formData.email);
+    const phoneError = validateField('phone', formData.phone);
     const messageError = validateField('message', formData.message);
 
     setErrors({
       name: nameError,
       email: emailError,
+      phone: phoneError,
       message: messageError
     });
 
     setTouched({
       name: true,
       email: true,
+      phone: true,
       message: true
     });
 
-    if (!nameError && !emailError && !messageError) {
+    if (!nameError && !emailError && !messageError && !phoneError) {
       setIsSubmitting(true);
       
       try {
-        // 1. Insert data into Supabase
         const { error: supabaseError } = await supabase
           .from('leads')
           .insert([
             {
               name: formData.name,
               email: formData.email,
+              phone: formData.phone,
               service: formData.service,
               budget: formData.budget,
               timeline: formData.timeline,
               message: formData.message,
-              status: 'new' // Default status
+              status: 'new'
             }
           ]);
 
         if (supabaseError) throw supabaseError;
 
-        // 2. Send Emails via EmailJS
         if (EMAILJS_SERVICE_ID !== 'service_placeholder') {
-          // A. Admin Notification
           await emailjs.send(
             EMAILJS_SERVICE_ID,
             EMAILJS_TEMPLATE_ID,
             {
               from_name: formData.name,
               from_email: formData.email,
+              phone_number: formData.phone,
               service: formData.service,
               budget: formData.budget,
               timeline: formData.timeline,
@@ -163,7 +170,6 @@ const Contact: React.FC = () => {
             }
           );
 
-          // B. User Confirmation (Auto-reply)
           if (EMAILJS_AUTO_REPLY_TEMPLATE_ID !== 'template_auto_reply_placeholder') {
             await emailjs.send(
               EMAILJS_SERVICE_ID,
@@ -192,8 +198,8 @@ const Contact: React.FC = () => {
 
   const handleReset = () => {
     setSubmitted(false);
-    setFormData({ name: '', email: '', service: 'Web Development', budget: '$5k - $10k', timeline: 'Within 1 month', message: '' });
-    setTouched({ name: false, email: false, message: false });
+    setFormData({ name: '', email: '', phone: '', service: 'Web Development', budget: '$5k - $10k', timeline: 'Within 1 month', message: '' });
+    setTouched({ name: false, email: false, phone: false, message: false });
     setErrors({});
   };
 
@@ -209,11 +215,10 @@ const Contact: React.FC = () => {
     <div className="pt-24 pb-20">
       <SEO 
         title="Contact Us" 
-        description="Get in touch with HyperBuild Labs. Book a free consultation for your next web or AI project. Available via form, email, or WhatsApp." 
+        description="Get in touch with HyperBuild Labs. Book a free consultation for your next web or AI project." 
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Schedule Call Banner */}
         <div className="bg-gradient-to-r from-brand-600 to-brand-800 rounded-2xl p-8 mb-16 text-white shadow-xl">
           <div className="flex flex-col md:flex-row items-center justify-between mb-6 md:mb-0">
             <div className="mb-6 md:mb-0 md:mr-8">
@@ -233,7 +238,6 @@ const Contact: React.FC = () => {
             </button>
           </div>
           
-          {/* Booking Widget */}
           {showBooking && (
             <div className="mt-8 animate-fadeIn">
               <BookingSystem />
@@ -243,7 +247,6 @@ const Contact: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
           
-          {/* Contact Form */}
           <div>
             <SectionHeading 
               title="Request a Quote" 
@@ -274,27 +277,47 @@ const Contact: React.FC = () => {
                   </div>
                 )}
 
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-                  <input 
-                    type="text" 
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={getInputClasses('name')}
-                    placeholder="John Doe"
-                    aria-invalid={!!errors.name}
-                    aria-describedby={errors.name ? "name-error" : undefined}
-                    disabled={isSubmitting}
-                  />
-                  {errors.name && touched.name && (
-                    <div id="name-error" className="flex items-center mt-1.5 text-red-500 text-sm animate-fadeIn">
-                      <AlertCircle size={14} className="mr-1.5 flex-shrink-0" />
-                      <span>{errors.name}</span>
-                    </div>
-                  )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                    <input 
+                      type="text" 
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={getInputClasses('name')}
+                      placeholder="John Doe"
+                      disabled={isSubmitting}
+                    />
+                    {errors.name && touched.name && (
+                      <div className="flex items-center mt-1.5 text-red-500 text-sm">
+                        <AlertCircle size={14} className="mr-1.5" />
+                        <span>{errors.name}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1">Mobile Number</label>
+                    <input 
+                      type="tel" 
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={getInputClasses('phone')}
+                      placeholder="+1 (555) 000-0000"
+                      disabled={isSubmitting}
+                    />
+                    {errors.phone && touched.phone && (
+                      <div className="flex items-center mt-1.5 text-red-500 text-sm">
+                        <AlertCircle size={14} className="mr-1.5" />
+                        <span>{errors.phone}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div>
@@ -308,13 +331,11 @@ const Contact: React.FC = () => {
                     onBlur={handleBlur}
                     className={getInputClasses('email')}
                     placeholder="john@company.com"
-                    aria-invalid={!!errors.email}
-                    aria-describedby={errors.email ? "email-error" : undefined}
                     disabled={isSubmitting}
                   />
                   {errors.email && touched.email && (
-                    <div id="email-error" className="flex items-center mt-1.5 text-red-500 text-sm animate-fadeIn">
-                      <AlertCircle size={14} className="mr-1.5 flex-shrink-0" />
+                    <div className="flex items-center mt-1.5 text-red-500 text-sm">
+                      <AlertCircle size={14} className="mr-1.5" />
                       <span>{errors.email}</span>
                     </div>
                   )}
@@ -328,7 +349,7 @@ const Contact: React.FC = () => {
                     value={formData.service}
                     onChange={handleChange}
                     disabled={isSubmitting}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-shadow bg-white"
+                    className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none bg-white"
                   >
                     <option>Web Development</option>
                     <option>AI Solutions / Chatbot</option>
@@ -347,7 +368,7 @@ const Contact: React.FC = () => {
                       value={formData.budget}
                       onChange={handleChange}
                       disabled={isSubmitting}
-                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-shadow bg-white"
+                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-white"
                     >
                       <option>&lt; $1k</option>
                       <option>$1k - $5k</option>
@@ -364,7 +385,7 @@ const Contact: React.FC = () => {
                       value={formData.timeline}
                       onChange={handleChange}
                       disabled={isSubmitting}
-                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-shadow bg-white"
+                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-white"
                     >
                       <option>ASAP</option>
                       <option>Within 1 month</option>
@@ -385,63 +406,57 @@ const Contact: React.FC = () => {
                     onBlur={handleBlur}
                     className={getInputClasses('message')}
                     placeholder="Tell us a bit about your project goals..."
-                    aria-invalid={!!errors.message}
-                    aria-describedby={errors.message ? "message-error" : undefined}
                     disabled={isSubmitting}
                   ></textarea>
                   {errors.message && touched.message && (
-                    <div id="message-error" className="flex items-center mt-1.5 text-red-500 text-sm animate-fadeIn">
-                      <AlertCircle size={14} className="mr-1.5 flex-shrink-0" />
+                    <div className="flex items-center mt-1.5 text-red-500 text-sm">
+                      <AlertCircle size={14} className="mr-1.5" />
                       <span>{errors.message}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col items-center sm:items-start">
-                   <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
-                     {isSubmitting ? 'Sending...' : 'Submit Request'}
-                   </Button>
-                </div>
+                <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
+                  {isSubmitting ? 'Sending...' : 'Submit Request'}
+                </Button>
               </form>
             )}
           </div>
 
-          {/* Contact Info & FAQ */}
           <div className="flex flex-col justify-start">
             <div className="bg-secondary-900 text-white p-8 rounded-2xl mb-12 shadow-xl">
               <h3 className="text-xl font-bold mb-6">Contact Information</h3>
               <div className="space-y-6">
-                 <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="flex items-center group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 rounded-lg p-2 -ml-2 hover:bg-white/5" aria-label="Chat with us on WhatsApp">
+                 <a href={settings.whatsapp_link} target="_blank" rel="noopener noreferrer" className="flex items-center group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 rounded-lg p-2 -ml-2 hover:bg-white/5">
                     <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <MessageCircle className="text-white" size={20} aria-hidden="true" />
+                      <MessageCircle className="text-white" size={20} />
                     </div>
                     <div>
                       <p className="text-sm text-slate-400">WhatsApp Us</p>
-                      <p className="font-semibold">+1 (555) 123-4567</p>
+                      <p className="font-semibold">{settings.contact_phone}</p>
                     </div>
                  </a>
                  <div className="flex items-center p-2 -ml-2">
                     <div className="w-10 h-10 bg-brand-600 rounded-full flex items-center justify-center mr-4">
-                      <Mail className="text-white" size={20} aria-hidden="true" />
+                      <Mail className="text-white" size={20} />
                     </div>
                     <div>
                       <p className="text-sm text-slate-400">Email Us</p>
-                      <p className="font-semibold">hello@hyperbuildlabs.com</p>
+                      <p className="font-semibold">{settings.contact_email}</p>
                     </div>
                  </div>
                  <div className="flex items-center p-2 -ml-2">
                     <div className="w-10 h-10 bg-brand-600 rounded-full flex items-center justify-center mr-4">
-                      <MapPin className="text-white" size={20} aria-hidden="true" />
+                      <MapPin className="text-white" size={20} />
                     </div>
                     <div>
                       <p className="text-sm text-slate-400">Visit Us</p>
-                      <p className="font-semibold">123 Innovation Dr, Tech City</p>
+                      <p className="font-semibold">{settings.contact_address}</p>
                     </div>
                  </div>
               </div>
             </div>
 
-            {/* FAQ Accordion */}
             <div>
               <h3 className="text-2xl font-bold mb-6">Frequently Asked Questions</h3>
               <div className="space-y-4">
@@ -450,7 +465,6 @@ const Contact: React.FC = () => {
                     <button 
                       onClick={() => toggleFaq(idx)}
                       className="w-full flex justify-between items-center py-4 text-left focus:outline-none focus:text-brand-600 group"
-                      aria-expanded={openFaqIndex === idx}
                     >
                       <h4 className="font-semibold text-slate-900 group-hover:text-brand-600 transition-colors pr-4">{faq.question}</h4>
                       <ChevronDown 

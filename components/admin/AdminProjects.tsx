@@ -6,7 +6,7 @@ import Card from '../ui/Card';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Badge from '../ui/Badge';
-import { Loader2, Edit2, Trash2, Save, X, ImageIcon, Plus, Briefcase, UploadCloud } from 'lucide-react';
+import { Loader2, Edit2, Trash2, Save, X, ImageIcon, Plus, Briefcase, UploadCloud, Eye, ArrowUpRight } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
 const AdminProjects: React.FC = () => {
@@ -249,183 +249,239 @@ const AdminProjects: React.FC = () => {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
+      {/* Split Screen Create/Edit Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={currentProject.id ? "Edit Project" : "Add New Project"}
-        size="lg"
+        size="xl"
       >
-        <div className="space-y-6">
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <Input 
-               label="Project Title"
-               value={currentProject.title}
-               onChange={(e) => setCurrentProject({...currentProject, title: e.target.value})}
-               placeholder="e.g. FinFlow AI"
-             />
-             <div>
-               <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
-               <select 
-                  value={currentProject.category} 
-                  onChange={(e) => setCurrentProject({...currentProject, category: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500 bg-white"
-                >
-                  <option>Web Development</option>
-                  <option>AI Solutions</option>
-                  <option>E-commerce</option>
-                  <option>Automation</option>
-                  <option>Branding</option>
-                  <option>SaaS Platform</option>
-                </select>
-             </div>
-          </div>
-
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Cover Image</label>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Input 
-                  value={currentProject.image}
-                  onChange={(e) => setCurrentProject({...currentProject, image: e.target.value})}
-                  placeholder="Upload or paste URL..."
-                  icon={<ImageIcon size={16} />}
-                />
-              </div>
-              <div className="relative">
-                <input 
-                  type="file" 
-                  id="project-image-upload" 
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={isUploading}
-                />
-                <label 
-                  htmlFor="project-image-upload"
-                  className={`flex items-center justify-center px-4 py-2.5 border border-slate-200 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isUploading ? <Loader2 size={20} className="animate-spin text-brand-600" /> : <UploadCloud size={20} className="text-slate-600" />}
-                </label>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[75vh]">
+          {/* Left Column: Form */}
+          <div className="overflow-y-auto pr-4 custom-scrollbar space-y-6">
+            <div className="grid grid-cols-1 gap-6">
+               <Input 
+                 label="Project Title"
+                 value={currentProject.title}
+                 onChange={(e) => setCurrentProject({...currentProject, title: e.target.value})}
+                 placeholder="e.g. FinFlow AI"
+               />
+               <div>
+                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
+                 <select 
+                    value={currentProject.category} 
+                    onChange={(e) => setCurrentProject({...currentProject, category: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500 bg-white"
+                  >
+                    <option>Web Development</option>
+                    <option>AI Solutions</option>
+                    <option>E-commerce</option>
+                    <option>Automation</option>
+                    <option>Branding</option>
+                    <option>SaaS Platform</option>
+                  </select>
+               </div>
             </div>
-            {currentProject.image && (
-              <div className="mt-2 h-20 w-full bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
-                <img src={currentProject.image} alt="Preview" className="w-full h-full object-cover opacity-80" />
-              </div>
-            )}
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Short Description</label>
-            <textarea 
-              value={currentProject.description} 
-              onChange={(e) => setCurrentProject({...currentProject, description: e.target.value})}
-              rows={2}
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500 placeholder:text-slate-400"
-              placeholder="Brief overview for the card..."
-            />
-          </div>
-
-          <Input 
-            label="Impact / Headline Result"
-            value={currentProject.impact}
-            onChange={(e) => setCurrentProject({...currentProject, impact: e.target.value})}
-            placeholder="e.g. 200% Increase in Traffic"
-          />
-
-          {/* Client Info */}
-          <div className="grid grid-cols-2 gap-6">
-             <Input 
-               label="Client Name"
-               value={currentProject.client}
-               onChange={(e) => setCurrentProject({...currentProject, client: e.target.value})}
-             />
-             <Input 
-               label="Duration"
-               value={currentProject.duration}
-               onChange={(e) => setCurrentProject({...currentProject, duration: e.target.value})}
-               placeholder="e.g. 3 Months"
-             />
-          </div>
-
-          {/* Tech Stack */}
-          <div>
-           <label className="block text-sm font-medium text-slate-700 mb-1.5">Tech Stack</label>
-           <div className="flex items-center mb-2 gap-2">
-             <Input 
-               value={techStackInput}
-               onChange={(e) => setTechStackInput(e.target.value)}
-               onKeyDown={(e) => e.key === 'Enter' && handleAddTech()}
-               placeholder="e.g. React"
-               className="flex-1"
-             />
-             <Button onClick={handleAddTech} variant="secondary">Add</Button>
-           </div>
-           <div className="flex flex-wrap gap-2 min-h-[30px]">
-             {currentProject.techStack?.map((tech, idx) => (
-               <Badge key={idx} variant="neutral" className="pl-3 pr-1 py-1">
-                 {tech}
-                 <button onClick={() => handleRemoveTech(tech)} className="ml-2 p-0.5 hover:bg-slate-200 rounded-full text-slate-400 hover:text-red-500"><X size={12} /></button>
-               </Badge>
-             ))}
-           </div>
-         </div>
-
-         {/* Case Study Details */}
-         <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center"><Briefcase size={18} className="mr-2 text-brand-500"/> Case Study Details</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">The Challenge</label>
-                <textarea 
-                  value={currentProject.challenge} 
-                  onChange={(e) => setCurrentProject({...currentProject, challenge: e.target.value})}
-                  rows={3}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">The Solution</label>
-                <textarea 
-                  value={currentProject.solution} 
-                  onChange={(e) => setCurrentProject({...currentProject, solution: e.target.value})}
-                  rows={3}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Key Results (Bullet Points)</label>
-                <div className="flex items-center mb-2 gap-2">
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Cover Image</label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
                   <Input 
-                    value={resultInput}
-                    onChange={(e) => setResultInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddResult()}
-                    placeholder="e.g. 50% Reduction in Costs"
-                    className="flex-1"
+                    value={currentProject.image}
+                    onChange={(e) => setCurrentProject({...currentProject, image: e.target.value})}
+                    placeholder="Upload or paste URL..."
+                    icon={<ImageIcon size={16} />}
                   />
-                  <Button onClick={handleAddResult} variant="secondary">Add</Button>
                 </div>
-                <ul className="space-y-2">
-                  {currentProject.results?.map((res, idx) => (
-                    <li key={idx} className="flex items-center justify-between bg-white border border-slate-200 px-3 py-2 rounded-md shadow-sm">
-                      <span className="text-sm text-slate-700">{res}</span>
-                      <button onClick={() => handleRemoveResult(idx)} className="text-slate-400 hover:text-red-500"><X size={14} /></button>
-                    </li>
-                  ))}
-                </ul>
+                <div className="relative">
+                  <input 
+                    type="file" 
+                    id="project-image-upload" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={isUploading}
+                  />
+                  <label 
+                    htmlFor="project-image-upload"
+                    className={`flex items-center justify-center px-4 py-2.5 border border-slate-200 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isUploading ? <Loader2 size={20} className="animate-spin text-brand-600" /> : <UploadCloud size={20} className="text-slate-600" />}
+                  </label>
+                </div>
               </div>
             </div>
-         </div>
 
-         <div className="flex justify-end pt-4 border-t border-slate-100">
-            <Button onClick={() => setIsModalOpen(false)} variant="ghost" className="mr-3">Cancel</Button>
-            <Button onClick={handleSaveProject} leftIcon={<Save size={18} />}>Save Project</Button>
-         </div>
-       </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Short Description</label>
+              <textarea 
+                value={currentProject.description} 
+                onChange={(e) => setCurrentProject({...currentProject, description: e.target.value})}
+                rows={3}
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500 placeholder:text-slate-400"
+                placeholder="Brief overview for the card..."
+              />
+            </div>
+
+            <Input 
+              label="Impact / Headline Result"
+              value={currentProject.impact}
+              onChange={(e) => setCurrentProject({...currentProject, impact: e.target.value})}
+              placeholder="e.g. 200% Increase in Traffic"
+            />
+
+            {/* Client Info */}
+            <div className="grid grid-cols-2 gap-6">
+               <Input 
+                 label="Client Name"
+                 value={currentProject.client}
+                 onChange={(e) => setCurrentProject({...currentProject, client: e.target.value})}
+               />
+               <Input 
+                 label="Duration"
+                 value={currentProject.duration}
+                 onChange={(e) => setCurrentProject({...currentProject, duration: e.target.value})}
+                 placeholder="e.g. 3 Months"
+               />
+            </div>
+
+            {/* Tech Stack */}
+            <div>
+             <label className="block text-sm font-medium text-slate-700 mb-1.5">Tech Stack</label>
+             <div className="flex items-center mb-2 gap-2">
+               <Input 
+                 value={techStackInput}
+                 onChange={(e) => setTechStackInput(e.target.value)}
+                 onKeyDown={(e) => e.key === 'Enter' && handleAddTech()}
+                 placeholder="e.g. React"
+                 className="flex-1"
+               />
+               <Button onClick={handleAddTech} variant="secondary">Add</Button>
+             </div>
+             <div className="flex flex-wrap gap-2 min-h-[30px]">
+               {currentProject.techStack?.map((tech, idx) => (
+                 <Badge key={idx} variant="neutral" className="pl-3 pr-1 py-1">
+                   {tech}
+                   <button onClick={() => handleRemoveTech(tech)} className="ml-2 p-0.5 hover:bg-slate-200 rounded-full text-slate-400 hover:text-red-500"><X size={12} /></button>
+                 </Badge>
+               ))}
+             </div>
+           </div>
+
+           {/* Case Study Details */}
+           <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+              <h3 className="font-bold text-slate-900 mb-4 flex items-center"><Briefcase size={18} className="mr-2 text-brand-500"/> Case Study Details</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">The Challenge</label>
+                  <textarea 
+                    value={currentProject.challenge} 
+                    onChange={(e) => setCurrentProject({...currentProject, challenge: e.target.value})}
+                    rows={3}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">The Solution</label>
+                  <textarea 
+                    value={currentProject.solution} 
+                    onChange={(e) => setCurrentProject({...currentProject, solution: e.target.value})}
+                    rows={3}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Key Results (Bullet Points)</label>
+                  <div className="flex items-center mb-2 gap-2">
+                    <Input 
+                      value={resultInput}
+                      onChange={(e) => setResultInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddResult()}
+                      placeholder="e.g. 50% Reduction in Costs"
+                      className="flex-1"
+                    />
+                    <Button onClick={handleAddResult} variant="secondary">Add</Button>
+                  </div>
+                  <ul className="space-y-2">
+                    {currentProject.results?.map((res, idx) => (
+                      <li key={idx} className="flex items-center justify-between bg-white border border-slate-200 px-3 py-2 rounded-md shadow-sm">
+                        <span className="text-sm text-slate-700">{res}</span>
+                        <button onClick={() => handleRemoveResult(idx)} className="text-slate-400 hover:text-red-500"><X size={14} /></button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+           </div>
+          </div>
+
+          {/* Right Column: Live Card Preview */}
+          <div className="hidden lg:flex flex-col border-l border-slate-100 pl-8 overflow-hidden bg-slate-50/50 rounded-r-xl">
+             <div className="flex items-center justify-between mb-8 pb-2 border-b border-slate-200">
+                <h3 className="font-bold text-slate-500 text-sm uppercase flex items-center">
+                  <Eye size={16} className="mr-2"/> Live Card Preview
+                </h3>
+             </div>
+             
+             <div className="flex items-start justify-center p-4">
+               {/* Visual Replica of ProjectCard */}
+               <div className="group relative block bg-white rounded-2xl overflow-hidden shadow-xl border border-slate-100 max-w-sm w-full">
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={currentProject.image || 'https://picsum.photos/800/600'} 
+                      alt={currentProject.title} 
+                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-4 left-4">
+                       <span className="bg-white/90 backdrop-blur-sm text-slate-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                         {currentProject.category || 'Category'}
+                       </span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-brand-600 transition-colors">
+                      {currentProject.title || 'Project Title'}
+                    </h3>
+                    <p className="text-slate-600 mb-4 text-sm line-clamp-2">
+                      {currentProject.description || 'Project description will appear here...'}
+                    </p>
+                    
+                    <div className="mb-4">
+                        <span className="text-sm font-semibold text-brand-600">Impact: </span>
+                        <span className="text-sm text-slate-700 font-medium">
+                          {currentProject.impact || 'Impact Statement'}
+                        </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {currentProject.techStack?.slice(0, 3).map((tech, idx) => (
+                        <span key={idx} className="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-md font-medium">
+                          {tech}
+                        </span>
+                      ))}
+                      {(currentProject.techStack?.length || 0) > 3 && (
+                        <span className="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-md font-medium">
+                          +{(currentProject.techStack?.length || 0) - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+               </div>
+             </div>
+             <p className="text-center text-xs text-slate-400 mt-4">
+               This is how it will appear on the Portfolio page.
+             </p>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t border-slate-100 mt-6">
+           <Button onClick={() => setIsModalOpen(false)} variant="ghost" className="mr-3">Cancel</Button>
+           <Button onClick={handleSaveProject} leftIcon={<Save size={18} />}>Save Project</Button>
+        </div>
       </Modal>
     </div>
   );

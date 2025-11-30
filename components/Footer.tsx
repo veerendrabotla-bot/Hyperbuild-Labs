@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Rocket, Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from 'lucide-react';
-import { COMPANY_NAME } from '../constants';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 
 const Footer: React.FC = () => {
   const navigate = useNavigate();
+  const { settings } = useSiteSettings();
 
   return (
     <footer className="bg-secondary-900 text-slate-300 pt-16 pb-8 border-t border-slate-800">
@@ -15,25 +16,21 @@ const Footer: React.FC = () => {
             <div 
               className="flex items-center mb-6 cursor-pointer" 
               onClick={() => navigate('/')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && navigate('/')}
-              aria-label={`${COMPANY_NAME} Home`}
             >
               <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center mr-2">
-                <Rocket className="text-white w-5 h-5" aria-hidden="true" />
+                <Rocket className="text-white w-5 h-5" />
               </div>
               <span className="font-bold text-xl text-white tracking-tight">
-                {COMPANY_NAME}
+                {settings.company_name}
               </span>
             </div>
             <p className="text-sm leading-relaxed mb-6 text-slate-400">
               Transforming businesses with next-generation AI solutions, web development, and automation systems. Build the future with us.
             </p>
             <div className="flex space-x-4">
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="Follow us on Twitter"><Twitter size={20} aria-hidden="true" /></a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="Connect with us on LinkedIn"><Linkedin size={20} aria-hidden="true" /></a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="Follow us on Instagram"><Instagram size={20} aria-hidden="true" /></a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors"><Twitter size={20} /></a>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors"><Linkedin size={20} /></a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors"><Instagram size={20} /></a>
             </div>
           </div>
 
@@ -67,23 +64,23 @@ const Footer: React.FC = () => {
             <h4 className="text-white font-semibold mb-6">Contact Us</h4>
             <ul className="space-y-4 text-sm">
               <li className="flex items-start">
-                <MapPin className="w-5 h-5 mr-3 text-brand-500 flex-shrink-0" aria-hidden="true" />
-                <span>123 Innovation Dr,<br />Tech City, TC 90210</span>
+                <MapPin className="w-5 h-5 mr-3 text-brand-500 flex-shrink-0" />
+                <span>{settings.contact_address}</span>
               </li>
               <li className="flex items-center">
-                <Phone className="w-5 h-5 mr-3 text-brand-500 flex-shrink-0" aria-hidden="true" />
-                <span>+1 (555) 123-4567</span>
+                <Phone className="w-5 h-5 mr-3 text-brand-500 flex-shrink-0" />
+                <span>{settings.contact_phone}</span>
               </li>
               <li className="flex items-center">
-                <Mail className="w-5 h-5 mr-3 text-brand-500 flex-shrink-0" aria-hidden="true" />
-                <span>hello@{COMPANY_NAME.toLowerCase().replace(' ', '')}.com</span>
+                <Mail className="w-5 h-5 mr-3 text-brand-500 flex-shrink-0" />
+                <span>{settings.contact_email}</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
-          <p>&copy; {new Date().getFullYear()} {COMPANY_NAME}. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {settings.company_name}. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>

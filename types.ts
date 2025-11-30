@@ -75,11 +75,13 @@ export interface Lead {
   id: string;
   name: string;
   email: string;
+  phone?: string; // New Field
   service: string;
   budget?: string;
   timeline?: string;
   message: string;
   status: 'new' | 'contacted' | 'closed';
+  admin_notes?: string;
   created_at: string;
 }
 
@@ -131,4 +133,10 @@ export interface TeamMember {
   role: 'admin' | 'editor' | 'viewer';
   avatar?: string;
   created_at: string;
+}
+
+export interface SiteSetting {
+  key: string;
+  value: string;
+  description?: string;
 }
