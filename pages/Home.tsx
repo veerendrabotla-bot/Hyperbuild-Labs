@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, PlayCircle } from 'lucide-react';
 import SectionHeading from '../components/SectionHeading';
@@ -9,12 +9,33 @@ import SEO from '../components/SEO';
 import ScrollReveal from '../components/ScrollReveal';
 import { SERVICES, PORTFOLIO, TESTIMONIALS } from '../constants';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
+import { supabase } from '../lib/supabaseClient';
+import { Service } from '../types';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { settings } = useSiteSettings();
-  const featuredServices = SERVICES.slice(0, 3);
+  const [featuredServices, setFeaturedServices] = useState<Service[]>([]);
+  
+  // Projects still fallback to constants if needed for simplicity, or we could fetch top 2 dynamic ones
   const featuredProjects = PORTFOLIO.slice(0, 2);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const { data, error } = await supabase.from('services').select('*').limit(3).order('created_at', { ascending: true });
+        
+        if (error || !data || data.length === 0) {
+          setFeaturedServices(SERVICES.slice(0, 3));
+        } else {
+          setFeaturedServices(data as any[]);
+        }
+      } catch (err) {
+        setFeaturedServices(SERVICES.slice(0, 3));
+      }
+    };
+    fetchServices();
+  }, []);
 
   return (
     <div className="flex flex-col w-full">

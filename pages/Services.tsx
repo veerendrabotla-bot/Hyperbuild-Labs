@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import SectionHeading from '../components/SectionHeading';
 import ServiceCard from '../components/ServiceCard';
 import { SERVICES } from '../constants';
@@ -6,11 +6,38 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
 import ScrollReveal from '../components/ScrollReveal';
+import { supabase } from '../lib/supabaseClient';
+import { Service } from '../types';
+import { Loader2 } from 'lucide-react';
 
 const Services: React.FC = () => {
   const navigate = useNavigate();
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const categories = ['AI', 'Web', 'Automation', 'Branding'];
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: true });
+        
+        if (error || !data || data.length === 0) {
+          // Fallback to constants if DB empty
+          setServices(SERVICES);
+        } else {
+          setServices(data as any[]);
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setServices(SERVICES);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
 
   return (
     <div className="pt-24 pb-20">
@@ -32,28 +59,32 @@ const Services: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {categories.map((category) => {
-          const categoryServices = SERVICES.filter(s => s.category === category);
-          if (categoryServices.length === 0) return null;
+        {loading ? (
+           <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-brand-600"/></div>
+        ) : (
+          categories.map((category) => {
+            const categoryServices = services.filter(s => s.category === category);
+            if (categoryServices.length === 0) return null;
 
-          return (
-            <div key={category} className="mb-20">
-              <ScrollReveal>
-                <div className="flex items-center mb-8">
-                  <h2 className="text-3xl font-bold text-slate-900 mr-4">{category} Solutions</h2>
-                  <div className="h-px bg-slate-200 flex-1"></div>
+            return (
+              <div key={category} className="mb-20">
+                <ScrollReveal>
+                  <div className="flex items-center mb-8">
+                    <h2 className="text-3xl font-bold text-slate-900 mr-4">{category} Solutions</h2>
+                    <div className="h-px bg-slate-200 flex-1"></div>
+                  </div>
+                </ScrollReveal>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {categoryServices.map((service, idx) => (
+                    <ScrollReveal key={service.id} delay={idx * 0.1}>
+                      <ServiceCard service={service} />
+                    </ScrollReveal>
+                  ))}
                 </div>
-              </ScrollReveal>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {categoryServices.map((service, idx) => (
-                  <ScrollReveal key={service.id} delay={idx * 0.1}>
-                    <ServiceCard service={service} />
-                  </ScrollReveal>
-                ))}
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
 
         {/* Custom Solution CTA */}
         <ScrollReveal>

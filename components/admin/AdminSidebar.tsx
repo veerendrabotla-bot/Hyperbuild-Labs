@@ -1,11 +1,11 @@
 import React from 'react';
-import { Users, FileText, Briefcase, LogOut, Settings, Calendar, LayoutDashboard, CheckSquare, DollarSign, UserPlus, Globe } from 'lucide-react';
+import { Users, FileText, Briefcase, LogOut, Settings, Calendar, LayoutDashboard, CheckSquare, DollarSign, UserPlus, Globe, Zap } from 'lucide-react';
 import { AdminUser } from '../../types';
 
 interface AdminSidebarProps {
   user: AdminUser | null;
   activeTab: string;
-  setActiveTab: (tab: 'home' | 'leads' | 'blog' | 'projects' | 'appointments' | 'settings' | 'kanban' | 'invoices' | 'team' | 'content') => void;
+  setActiveTab: (tab: 'home' | 'leads' | 'blog' | 'projects' | 'appointments' | 'settings' | 'kanban' | 'invoices' | 'team' | 'content' | 'services') => void;
   onSignOut: () => void;
   className?: string;
 }
@@ -17,6 +17,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ user, activeTab, setActiveT
     { id: 'kanban', label: 'Projects / Tasks', icon: CheckSquare },
     { id: 'appointments', label: 'Calendar', icon: Calendar },
     { id: 'invoices', label: 'Financials', icon: DollarSign },
+    { id: 'services', label: 'Services', icon: Zap },
     { id: 'blog', label: 'Blog Posts', icon: FileText },
     { id: 'projects', label: 'Portfolio', icon: Briefcase },
     { id: 'content', label: 'Site Content', icon: Globe },

@@ -14,13 +14,14 @@ import AdminKanban from '../components/admin/AdminKanban';
 import AdminInvoices from '../components/admin/AdminInvoices';
 import AdminTeam from '../components/admin/AdminTeam';
 import AdminContent from '../components/admin/AdminContent';
+import AdminServices from '../components/admin/AdminServices';
 import { useToast } from '../contexts/ToastContext';
 
 const AdminDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { success } = useToast();
-  const [activeTab, setActiveTab] = useState<'home' | 'leads' | 'blog' | 'projects' | 'settings' | 'appointments' | 'kanban' | 'invoices' | 'team' | 'content'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'leads' | 'blog' | 'projects' | 'settings' | 'appointments' | 'kanban' | 'invoices' | 'team' | 'content' | 'services'>('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -92,6 +93,7 @@ const AdminDashboard: React.FC = () => {
               {activeTab === 'invoices' && 'Invoices & Financials'}
               {activeTab === 'team' && 'Team Management'}
               {activeTab === 'content' && 'Site Content CMS'}
+              {activeTab === 'services' && 'Service Offerings'}
             </h1>
             <p className="text-slate-500 mt-1">
               {activeTab === 'home' ? 'Overview of your agency performance.' : `Manage ${activeTab.replace('-', ' ')}.`}
@@ -109,6 +111,7 @@ const AdminDashboard: React.FC = () => {
             {activeTab === 'invoices' && <AdminInvoices />}
             {activeTab === 'team' && <AdminTeam />}
             {activeTab === 'content' && <AdminContent />}
+            {activeTab === 'services' && <AdminServices />}
           </div>
         </div>
       </main>

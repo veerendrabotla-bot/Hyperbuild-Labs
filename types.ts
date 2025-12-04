@@ -9,7 +9,8 @@ export interface Service {
   id: string;
   title: string;
   description: string;
-  icon: LucideIcon;
+  icon?: LucideIcon; // Optional for static fallback
+  icon_name?: string; // For DB storage
   features: string[];
   category: 'AI' | 'Web' | 'Automation' | 'Branding';
 }

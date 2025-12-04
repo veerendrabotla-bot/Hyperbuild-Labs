@@ -39,6 +39,29 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
  *   ('contact_address', '123 Innovation Dr, Tech City', 'Physical address'),
  *   ('hero_title', 'AI-Powered Websites & Automation', 'Main headline on Home page'),
  *   ('hero_subtitle', 'We build enterprise-grade digital experiences that grow your business on autopilot.', 'Subtitle on Home page'),
- *   ('whatsapp_link', 'https://wa.me/1234567890', 'WhatsApp direct link')
+ *   ('whatsapp_link', 'https://wa.me/1234567890', 'WhatsApp direct link'),
+ *   ('logo_url', '', 'URL of the company logo'),
+ *   ('social_twitter', 'https://twitter.com', 'Twitter Profile URL'),
+ *   ('social_linkedin', 'https://linkedin.com', 'LinkedIn Profile URL'),
+ *   ('social_instagram', 'https://instagram.com', 'Instagram Profile URL')
  * on conflict (key) do nothing;
+ * 
+ * -- 5. Create Services Table
+ * create table if not exists services (
+ *   id uuid default gen_random_uuid() primary key,
+ *   title text not null,
+ *   description text,
+ *   icon_name text default 'Zap',
+ *   category text,
+ *   features text[],
+ *   created_at timestamp with time zone default timezone('utc'::text, now())
+ * );
+ * 
+ * alter table services enable row level security;
+ * 
+ * drop policy if exists "Public view services" on services;
+ * create policy "Public view services" on services for select using (true);
+ * 
+ * drop policy if exists "Admin manage services" on services;
+ * create policy "Admin manage services" on services for all using (auth.role() = 'authenticated');
  */
