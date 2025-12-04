@@ -17,9 +17,13 @@ const Footer: React.FC = () => {
               className="flex items-center mb-6 cursor-pointer" 
               onClick={() => navigate('/')}
             >
-              <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center mr-2">
-                <Rocket className="text-white w-5 h-5" />
-              </div>
+              {settings.logo_url ? (
+                <img src={settings.logo_url} alt="Logo" className="h-8 w-auto mr-2 object-contain brightness-0 invert" />
+              ) : (
+                <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center mr-2">
+                  <Rocket className="text-white w-5 h-5" />
+                </div>
+              )}
               <span className="font-bold text-xl text-white tracking-tight">
                 {settings.company_name}
               </span>
@@ -28,9 +32,9 @@ const Footer: React.FC = () => {
               Transforming businesses with next-generation AI solutions, web development, and automation systems. Build the future with us.
             </p>
             <div className="flex space-x-4">
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors"><Twitter size={20} /></a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors"><Linkedin size={20} /></a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors"><Instagram size={20} /></a>
+              <a href={settings.social_twitter || "https://twitter.com"} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors"><Twitter size={20} /></a>
+              <a href={settings.social_linkedin || "https://linkedin.com"} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors"><Linkedin size={20} /></a>
+              <a href={settings.social_instagram || "https://instagram.com"} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors"><Instagram size={20} /></a>
             </div>
           </div>
 

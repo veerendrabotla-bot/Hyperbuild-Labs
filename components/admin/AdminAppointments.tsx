@@ -12,6 +12,7 @@ const AdminAppointments: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed'>('upcoming');
+  const [actionLoading, setActionLoading] = useState<string | null>(null); // Track ID of appointment being modified
 
   useEffect(() => {
     fetchAppointments();
@@ -41,6 +42,8 @@ const AdminAppointments: React.FC = () => {
     
     if (!window.confirm(confirmMsg)) return;
 
+    setActionLoading(id);
+
     try {
       const { error } = await supabase
         .from('appointments')
@@ -49,15 +52,20 @@ const AdminAppointments: React.FC = () => {
 
       if (error) throw error;
       
-      // Update local state
-      setAppointments(prev => prev.map(apt => 
-        apt.id === id ? { ...apt, status: status } : apt
-      ));
-      
       success(status === 'cancelled' ? 'Appointment cancelled' : 'Appointment marked completed');
+      
+      // Delay state update slightly so user sees the loading spinner finish or success state before card moves
+      setTimeout(() => {
+        setAppointments(prev => prev.map(apt => 
+          apt.id === id ? { ...apt, status: status } : apt
+        ));
+        setActionLoading(null);
+      }, 500);
+      
     } catch (error) {
       console.error('Error updating appointment:', error);
       showError('Failed to update appointment');
+      setActionLoading(null);
     }
   };
 
@@ -116,14 +124,21 @@ const AdminAppointments: React.FC = () => {
            {filteredAppointments.map(apt => {
              const date = new Date(apt.date);
              const isPast = date < new Date();
+             const isProcessing = actionLoading === apt.id;
              
              return (
-               <Card key={apt.id} className={`border-l-4 ${
+               <Card key={apt.id} className={`border-l-4 transition-all duration-300 ${
                  apt.status === 'cancelled' ? 'border-l-slate-300 opacity-75' : 
                  apt.status === 'completed' ? 'border-l-green-500 bg-slate-50' :
                  isPast ? 'border-l-slate-400 bg-slate-50' : 
-                 'border-l-brand-500'
+                 'border-l-brand-500 hover:shadow-lg'
                }`}>
+                  {isProcessing && (
+                    <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center rounded-xl backdrop-blur-sm">
+                      <Loader2 className="animate-spin text-brand-600" />
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-start mb-4">
                      <div className="bg-slate-100 rounded-lg p-2 text-center min-w-[60px]">
                         <div className="text-xs font-bold text-slate-500 uppercase">{date.toLocaleDateString('en-US', { month: 'short' })}</div>
@@ -165,17 +180,19 @@ const AdminAppointments: React.FC = () => {
                        <>
                         <button 
                           onClick={() => updateStatus(apt.id, 'completed')}
-                          className="text-green-600 text-sm hover:text-green-800 flex items-center px-2 py-1 rounded hover:bg-green-50"
+                          disabled={isProcessing}
+                          className="text-green-600 text-sm hover:text-green-800 flex items-center px-3 py-1.5 rounded hover:bg-green-50 border border-transparent hover:border-green-200 transition-all font-medium disabled:opacity-50"
                           title="Mark as completed"
                         >
-                          <CheckCircle size={14} className="mr-1" /> Complete
+                          <CheckCircle size={16} className="mr-1.5" /> Complete
                         </button>
                         <button 
                           onClick={() => updateStatus(apt.id, 'cancelled')}
-                          className="text-red-500 text-sm hover:text-red-700 flex items-center px-2 py-1 rounded hover:bg-red-50"
+                          disabled={isProcessing}
+                          className="text-red-500 text-sm hover:text-red-700 flex items-center px-3 py-1.5 rounded hover:bg-red-50 border border-transparent hover:border-red-200 transition-all font-medium disabled:opacity-50"
                           title="Cancel meeting"
                         >
-                          <XCircle size={14} className="mr-1" /> Cancel
+                          <XCircle size={16} className="mr-1.5" /> Cancel
                         </button>
                        </>
                     )}

@@ -3,12 +3,14 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Rocket, Search } from 'lucide-react';
 import { COMPANY_NAME, WHATSAPP_LINK } from '../constants';
 import Button from './Button';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { settings } = useSiteSettings();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,13 +52,17 @@ const Navbar: React.FC = () => {
             role="button"
             tabIndex={0}
             onKeyDown={(e) => e.key === 'Enter' && navigate('/')}
-            aria-label={`${COMPANY_NAME} Home`}
+            aria-label={`${settings.company_name || COMPANY_NAME} Home`}
           >
-            <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center mr-2">
-              <Rocket className="text-white w-5 h-5" aria-hidden="true" />
-            </div>
+            {settings.logo_url ? (
+              <img src={settings.logo_url} alt="Logo" className="h-8 w-auto mr-2 object-contain" />
+            ) : (
+              <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center mr-2">
+                <Rocket className="text-white w-5 h-5" aria-hidden="true" />
+              </div>
+            )}
             <span className={`font-bold text-xl tracking-tight ${scrolled ? 'text-slate-900' : 'text-slate-900 lg:text-slate-900'}`}>
-              {COMPANY_NAME}
+              {settings.company_name || COMPANY_NAME}
             </span>
           </div>
 
@@ -135,7 +141,7 @@ const Navbar: React.FC = () => {
                <Button onClick={() => navigate('/contact')} className="w-full justify-center">
                  Book Consultation
                </Button>
-               <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="w-full" aria-label="Chat with us on WhatsApp">
+               <a href={settings.whatsapp_link || WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="w-full" aria-label="Chat with us on WhatsApp">
                 <button className="w-full justify-center border border-green-500 text-green-600 hover:bg-green-50 font-medium py-2 rounded-lg transition-colors">
                   WhatsApp Us
                 </button>
