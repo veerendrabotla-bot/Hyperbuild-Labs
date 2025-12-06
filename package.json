@@ -17,7 +17,9 @@
     "framer-motion": "^11.3.8",
     "@supabase/supabase-js": "^2.39.0",
     "@emailjs/browser": "^4.4.1",
-    "qrcode": "^1.5.3"
+    "qrcode": "^1.5.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "vite": "^7.2.6"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
