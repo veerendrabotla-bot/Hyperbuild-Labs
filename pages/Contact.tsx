@@ -61,8 +61,16 @@ const Contact: React.FC = () => {
   const fetchFaqs = async () => {
     try {
       const { data, error } = await supabase.from('faqs').select('*').order('order_index', { ascending: true });
-      if (error || !data || data.length === 0) {
+      
+      if (error) {
+        if (error.code === 'PGRST205') {
+           console.warn("FAQs table not found in Supabase. Using static fallback data.");
+        } else {
+           console.error("Error fetching FAQs:", error);
+        }
         setFaqs(FAQS); // Fallback to constants
+      } else if (!data || data.length === 0) {
+        setFaqs(FAQS);
       } else {
         setFaqs(data as FaqItem[]);
       }

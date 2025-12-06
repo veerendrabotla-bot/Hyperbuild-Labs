@@ -17,7 +17,16 @@ const Pricing: React.FC = () => {
     const fetchPricing = async () => {
       try {
         const { data, error } = await supabase.from('pricing_tiers').select('*').order('order_index', { ascending: true });
-        if (error || !data || data.length === 0) {
+        
+        if (error) {
+          // If table doesn't exist (PGRST205), just use static data without screaming error
+          if (error.code === 'PGRST205') {
+            console.warn("Pricing table not found in Supabase. Using static fallback data.");
+          } else {
+            console.error("Error fetching pricing:", error);
+          }
+          setPricingTiers(PRICING);
+        } else if (!data || data.length === 0) {
           setPricingTiers(PRICING);
         } else {
           // Map DB snake_case to frontend if needed (types handle most)
