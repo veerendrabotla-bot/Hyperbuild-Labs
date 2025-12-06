@@ -9,6 +9,7 @@ import emailjs from '@emailjs/browser';
 import BookingSystem from '../components/BookingSystem';
 import { useToast } from '../contexts/ToastContext';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
+import { FaqItem } from '../types';
 
 interface FormErrors {
   name?: string;
@@ -49,11 +50,26 @@ const Contact: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   useEffect(() => {
     emailjs.init(EMAILJS_PUBLIC_KEY);
+    fetchFaqs();
   }, []);
+
+  const fetchFaqs = async () => {
+    try {
+      const { data, error } = await supabase.from('faqs').select('*').order('order_index', { ascending: true });
+      if (error || !data || data.length === 0) {
+        setFaqs(FAQS); // Fallback to constants
+      } else {
+        setFaqs(data as FaqItem[]);
+      }
+    } catch (err) {
+      setFaqs(FAQS);
+    }
+  };
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
@@ -460,8 +476,8 @@ const Contact: React.FC = () => {
             <div>
               <h3 className="text-2xl font-bold mb-6">Frequently Asked Questions</h3>
               <div className="space-y-4">
-                {FAQS.map((faq, idx) => (
-                  <div key={idx} className="border-b border-slate-200 pb-2">
+                {faqs.map((faq, idx) => (
+                  <div key={faq.id || idx} className="border-b border-slate-200 pb-2">
                     <button 
                       onClick={() => toggleFaq(idx)}
                       className="w-full flex justify-between items-center py-4 text-left focus:outline-none focus:text-brand-600 group"

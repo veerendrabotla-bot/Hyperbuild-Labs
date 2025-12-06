@@ -1,11 +1,11 @@
 import React from 'react';
-import { Users, FileText, Briefcase, LogOut, Settings, Calendar, LayoutDashboard, CheckSquare, DollarSign, UserPlus, Globe, Zap } from 'lucide-react';
+import { Users, FileText, Briefcase, LogOut, Settings, Calendar, LayoutDashboard, CheckSquare, DollarSign, UserPlus, Globe, Zap, MessageSquareQuote, HelpCircle, Tag } from 'lucide-react';
 import { AdminUser } from '../../types';
 
 interface AdminSidebarProps {
   user: AdminUser | null;
   activeTab: string;
-  setActiveTab: (tab: 'home' | 'leads' | 'blog' | 'projects' | 'appointments' | 'settings' | 'kanban' | 'invoices' | 'team' | 'content' | 'services') => void;
+  setActiveTab: (tab: 'home' | 'leads' | 'blog' | 'projects' | 'appointments' | 'settings' | 'kanban' | 'invoices' | 'team' | 'content' | 'services' | 'testimonials' | 'faqs' | 'pricing') => void;
   onSignOut: () => void;
   className?: string;
 }
@@ -18,8 +18,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ user, activeTab, setActiveT
     { id: 'appointments', label: 'Calendar', icon: Calendar },
     { id: 'invoices', label: 'Financials', icon: DollarSign },
     { id: 'services', label: 'Services', icon: Zap },
-    { id: 'blog', label: 'Blog Posts', icon: FileText },
     { id: 'projects', label: 'Portfolio', icon: Briefcase },
+    { id: 'blog', label: 'Blog Posts', icon: FileText },
+    { id: 'pricing', label: 'Pricing Tiers', icon: Tag },
+    { id: 'testimonials', label: 'Testimonials', icon: MessageSquareQuote },
+    { id: 'faqs', label: 'FAQs', icon: HelpCircle },
     { id: 'content', label: 'Site Content', icon: Globe },
     { id: 'team', label: 'Team', icon: UserPlus },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -31,7 +34,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ user, activeTab, setActiveT
         <h2 className="text-xl font-bold">HyperBuild Admin</h2>
         <p className="text-xs text-slate-400 mt-1">Logged in as: {user?.email}</p>
       </div>
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
         {menuItems.map((item) => (
           <button 
             key={item.id}

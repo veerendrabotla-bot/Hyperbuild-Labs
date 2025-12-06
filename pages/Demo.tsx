@@ -4,6 +4,7 @@ import { Bot, Send, User, RefreshCw, Sparkles } from 'lucide-react';
 import SEO from '../components/SEO';
 import { GoogleGenAI } from "@google/genai";
 import { PRICING, SERVICES } from '../constants';
+import { supabase } from '../lib/supabaseClient';
 
 interface Message {
   id: number;
@@ -18,6 +19,9 @@ const Demo: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Store fetched data for AI Context
+  const [dynamicContext, setDynamicContext] = useState({ services: SERVICES, pricing: PRICING });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -26,6 +30,26 @@ const Demo: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  // Fetch real data on load to train AI
+  useEffect(() => {
+    const fetchContextData = async () => {
+      try {
+        const [servicesRes, pricingRes] = await Promise.all([
+          supabase.from('services').select('*'),
+          supabase.from('pricing_tiers').select('*')
+        ]);
+        
+        const services = (servicesRes.data && servicesRes.data.length > 0) ? servicesRes.data : SERVICES;
+        const pricing = (pricingRes.data && pricingRes.data.length > 0) ? pricingRes.data : PRICING;
+        
+        setDynamicContext({ services: services as any, pricing: pricing as any });
+      } catch (err) {
+        console.warn("AI Demo: Using static context fallback");
+      }
+    };
+    fetchContextData();
+  }, []);
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
@@ -39,13 +63,8 @@ const Demo: React.FC = () => {
 
     try {
       // Initialize Gemini Client
-      const apiKey = process.env.API_KEY;
-      
-      if (!apiKey) {
-        throw new Error("API Key not found");
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
+      // The API key must be obtained exclusively from process.env.API_KEY and used directly.
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
       // Construct context about the agency
       const agencyContext = `
@@ -58,13 +77,13 @@ const Demo: React.FC = () => {
         - Focus: Enterprise-grade websites, AI Agents, CRM Automation.
         - Tone: Professional, Tech-savvy, Confident.
         
-        SERVICES & PRICING CONTEXT:
-        ${JSON.stringify(SERVICES)}
-        ${JSON.stringify(PRICING)}
+        SERVICES & PRICING CONTEXT (Real Database Data):
+        ${JSON.stringify(dynamicContext.services)}
+        ${JSON.stringify(dynamicContext.pricing)}
         
         RULES:
         1. Keep responses concise (under 50 words usually).
-        2. If asked about price, mention the starting prices but say custom quotes require a call.
+        2. If asked about price, mention the specific prices from the context provided above.
         3. Always be polite.
         4. If you don't know something, suggest booking a consultation.
       `;

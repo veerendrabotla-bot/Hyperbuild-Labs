@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
 import { Cookie, X, ShieldCheck } from 'lucide-react';
+import { initGA } from '../lib/analytics';
 
 const CookieConsent: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -13,19 +14,22 @@ const CookieConsent: React.FC = () => {
       // Small delay for better UX (don't show immediately on load)
       const timer = setTimeout(() => setIsVisible(true), 1500);
       return () => clearTimeout(timer);
+    } else if (consent === 'accepted') {
+      // Init GA if previously accepted
+      initGA();
     }
   }, []);
 
   const handleAccept = () => {
     localStorage.setItem('hyperbuild_cookie_consent', 'accepted');
     setIsVisible(false);
-    // Here you would typically trigger analytics scripts
+    initGA(); // Turn on analytics immediately
   };
 
   const handleDecline = () => {
     localStorage.setItem('hyperbuild_cookie_consent', 'declined');
     setIsVisible(false);
-    // Here you would ensure non-essential scripts are blocked
+    // GA remains off
   };
 
   return (
@@ -52,7 +56,7 @@ const CookieConsent: React.FC = () => {
                  <p className="text-slate-600 text-sm leading-relaxed max-w-2xl">
                    We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. 
                    By clicking "Accept All", you consent to our use of cookies in accordance with our 
-                   <a href="#" className="text-brand-600 hover:text-brand-700 underline ml-1 font-medium">Privacy Policy</a>.
+                   <a href="#/privacy" className="text-brand-600 hover:text-brand-700 underline ml-1 font-medium">Privacy Policy</a>.
                  </p>
                </div>
             </div>

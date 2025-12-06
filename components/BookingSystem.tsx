@@ -4,6 +4,8 @@ import Button from './Button';
 import Input from './ui/Input';
 import { Calendar, Clock, ChevronLeft, ChevronRight, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
+import emailjs from '@emailjs/browser';
+import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_AUTO_REPLY_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../constants';
 
 const BookingSystem: React.FC = () => {
   const { success, error: showError, show } = useToast();
@@ -20,6 +22,10 @@ const BookingSystem: React.FC = () => {
   });
 
   const [availableDays, setAvailableDays] = useState<Date[]>([]);
+
+  useEffect(() => {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  }, []);
 
   // Generate next 14 days
   useEffect(() => {
@@ -88,8 +94,10 @@ const BookingSystem: React.FC = () => {
     const [hours] = selectedSlot.split(':');
     const appointmentDate = new Date(selectedDate);
     appointmentDate.setHours(parseInt(hours), 0, 0, 0);
+    const formattedDate = `${selectedDate.toLocaleDateString()} at ${selectedSlot}`;
 
     try {
+      // 1. Save to Database
       const { error } = await supabase.from('appointments').insert([
         {
           name: formData.name,
@@ -101,6 +109,33 @@ const BookingSystem: React.FC = () => {
       ]);
 
       if (error) throw error;
+
+      // 2. Send Emails (Non-blocking for user success but logged)
+      if (EMAILJS_SERVICE_ID !== 'service_placeholder') {
+        try {
+          // Admin Alert
+          await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_name: 'Admin',
+            from_name: formData.name,
+            from_email: formData.email,
+            message: `New Booking: ${formattedDate}. Notes: ${formData.notes}`,
+            service: 'Discovery Call Booking'
+          });
+
+          // User Confirmation
+          if (EMAILJS_AUTO_REPLY_TEMPLATE_ID) {
+             await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_AUTO_REPLY_TEMPLATE_ID, {
+                to_name: formData.name,
+                to_email: formData.email,
+                service: `Discovery Call on ${formattedDate}`,
+                message: `Thank you for booking. We have scheduled your call for ${formattedDate}. Link will be sent shortly.`
+             });
+          }
+        } catch (emailError) {
+          console.error("Failed to send booking emails:", emailError);
+          // Don't fail the UI, just log it
+        }
+      }
       
       success("Booking confirmed successfully!");
       setStep(3); // Success

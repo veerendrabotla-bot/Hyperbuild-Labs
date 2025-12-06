@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabaseClient';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import { Lead, Appointment, Invoice } from '../../types';
-import { Users, DollarSign, Calendar, TrendingUp, ArrowRight, Loader2, Clock, CheckCircle } from 'lucide-react';
+import { Users, DollarSign, Calendar, TrendingUp, ArrowRight, Loader2, Clock, CheckCircle, BarChart3 } from 'lucide-react';
 
 const AdminHome: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -64,6 +64,28 @@ const AdminHome: React.FC = () => {
       maximumSignificantDigits: 3,
     }).format(amount);
   };
+
+  // Chart Logic: Last 6 Months Lead Velocity
+  const getChartData = () => {
+    const months = [];
+    const today = new Date();
+    
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthKey = d.toLocaleString('default', { month: 'short' });
+      
+      const count = leads.filter(l => {
+        const lDate = new Date(l.created_at);
+        return lDate.getMonth() === d.getMonth() && lDate.getFullYear() === d.getFullYear();
+      }).length;
+      
+      months.push({ month: monthKey, count });
+    }
+    return months;
+  };
+
+  const chartData = getChartData();
+  const maxCount = Math.max(...chartData.map(d => d.count), 5); // Minimum scale of 5
 
   if (loading) {
     return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-600" /></div>;
@@ -144,12 +166,44 @@ const AdminHome: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Leads */}
-        <div className="lg:col-span-2">
-          <Card className="h-full" noPadding>
+        {/* Main Column: Chart & Leads */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Lead Velocity Chart */}
+          <Card className="h-80 flex flex-col" noPadding>
+             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                  <BarChart3 size={18} className="text-brand-600" /> 
+                  Growth Velocity
+                </h3>
+                <span className="text-xs text-slate-400">Last 6 Months</span>
+             </div>
+             <div className="flex-1 p-6 flex items-end justify-between gap-4">
+                {chartData.map((data, idx) => {
+                  const heightPercentage = Math.max((data.count / maxCount) * 100, 5); // Min 5% height
+                  return (
+                    <div key={idx} className="flex flex-col items-center flex-1 group">
+                       <div className="relative w-full flex justify-center items-end h-40 bg-slate-50 rounded-lg overflow-hidden">
+                          <div 
+                            className="w-full mx-2 bg-brand-500/80 group-hover:bg-brand-500 transition-all duration-500 rounded-t-sm"
+                            style={{ height: `${heightPercentage}%` }}
+                          ></div>
+                          <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs py-1 px-2 rounded mb-1">
+                            {data.count} Leads
+                          </div>
+                       </div>
+                       <span className="mt-3 text-xs font-medium text-slate-500">{data.month}</span>
+                    </div>
+                  );
+                })}
+             </div>
+          </Card>
+
+          {/* Recent Leads List */}
+          <Card className="flex-1" noPadding>
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h3 className="font-bold text-slate-900">Recent Leads</h3>
-              <button className="text-brand-600 text-sm font-medium hover:underline flex items-center">
+              <button onClick={() => window.location.hash = '#/admin/dashboard?tab=leads'} className="text-brand-600 text-sm font-medium hover:underline flex items-center">
                 View All <ArrowRight size={14} className="ml-1" />
               </button>
             </div>
@@ -180,8 +234,8 @@ const AdminHome: React.FC = () => {
           </Card>
         </div>
 
-        {/* Upcoming Schedule Mini */}
-        <div>
+        {/* Sidebar Column: Schedule */}
+        <div className="lg:col-span-1">
           <Card className="h-full" noPadding>
             <div className="p-6 border-b border-slate-100">
               <h3 className="font-bold text-slate-900">Upcoming Appointments</h3>
@@ -189,7 +243,7 @@ const AdminHome: React.FC = () => {
             <div className="p-4 space-y-3">
               {(appointments || [])
                 .filter(a => new Date(a.date) > new Date() && a.status !== 'cancelled')
-                .slice(0, 4)
+                .slice(0, 5)
                 .map(apt => (
                   <div key={apt.id} className="flex items-start p-3 bg-slate-50 rounded-lg border border-slate-100">
                      <div className="bg-white p-2 rounded border border-slate-200 text-center min-w-[50px] mr-3">
@@ -197,7 +251,7 @@ const AdminHome: React.FC = () => {
                         <div className="text-lg font-bold text-slate-900 leading-none">{new Date(apt.date).getDate()}</div>
                      </div>
                      <div>
-                        <p className="text-sm font-semibold text-slate-900">{apt.name}</p>
+                        <p className="text-sm font-semibold text-slate-900 line-clamp-1">{apt.name}</p>
                         <p className="text-xs text-slate-500 flex items-center mt-1">
                           <Clock size={12} className="mr-1"/> 
                           {new Date(apt.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}

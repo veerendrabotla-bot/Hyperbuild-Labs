@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { LogOut, Menu, X, LayoutDashboard } from 'lucide-react';
 import AdminSidebar from '../components/admin/AdminSidebar';
@@ -15,14 +15,31 @@ import AdminInvoices from '../components/admin/AdminInvoices';
 import AdminTeam from '../components/admin/AdminTeam';
 import AdminContent from '../components/admin/AdminContent';
 import AdminServices from '../components/admin/AdminServices';
+import AdminTestimonials from '../components/admin/AdminTestimonials';
+import AdminFAQ from '../components/admin/AdminFAQ';
+import AdminPricing from '../components/admin/AdminPricing';
 import { useToast } from '../contexts/ToastContext';
 
 const AdminDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { success } = useToast();
-  const [activeTab, setActiveTab] = useState<'home' | 'leads' | 'blog' | 'projects' | 'settings' | 'appointments' | 'kanban' | 'invoices' | 'team' | 'content' | 'services'>('home');
+  
+  // Get active tab from URL or default to 'home'
+  const activeTab = searchParams.get('tab') || 'home';
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    // Handle Password Reset Redirect
+    const isReset = searchParams.get('reset');
+    if (isReset === 'true') {
+      success('Please set a new password');
+      setActiveTab('settings');
+      // Clean up URL
+      setSearchParams({ tab: 'settings' });
+    }
+  }, [searchParams, setSearchParams, success]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -30,8 +47,8 @@ const AdminDashboard: React.FC = () => {
     navigate('/admin/login');
   };
 
-  const handleTabChange = (tab: any) => {
-    setActiveTab(tab);
+  const setActiveTab = (tab: string) => {
+    setSearchParams({ tab });
     setIsSidebarOpen(false);
   };
 
@@ -44,7 +61,7 @@ const AdminDashboard: React.FC = () => {
         className="hidden md:flex h-full"
         user={user} 
         activeTab={activeTab} 
-        setActiveTab={handleTabChange} 
+        setActiveTab={setActiveTab as any} 
         onSignOut={handleSignOut} 
       />
 
@@ -59,7 +76,7 @@ const AdminDashboard: React.FC = () => {
                 className="flex h-full w-full"
                 user={user} 
                 activeTab={activeTab} 
-                setActiveTab={handleTabChange} 
+                setActiveTab={setActiveTab as any} 
                 onSignOut={handleSignOut} 
               />
            </div>
@@ -94,6 +111,9 @@ const AdminDashboard: React.FC = () => {
               {activeTab === 'team' && 'Team Management'}
               {activeTab === 'content' && 'Site Content CMS'}
               {activeTab === 'services' && 'Service Offerings'}
+              {activeTab === 'testimonials' && 'Client Testimonials'}
+              {activeTab === 'faqs' && 'FAQ Management'}
+              {activeTab === 'pricing' && 'Pricing Packages'}
             </h1>
             <p className="text-slate-500 mt-1">
               {activeTab === 'home' ? 'Overview of your agency performance.' : `Manage ${activeTab.replace('-', ' ')}.`}
@@ -112,6 +132,9 @@ const AdminDashboard: React.FC = () => {
             {activeTab === 'team' && <AdminTeam />}
             {activeTab === 'content' && <AdminContent />}
             {activeTab === 'services' && <AdminServices />}
+            {activeTab === 'testimonials' && <AdminTestimonials />}
+            {activeTab === 'faqs' && <AdminFAQ />}
+            {activeTab === 'pricing' && <AdminPricing />}
           </div>
         </div>
       </main>

@@ -32,11 +32,14 @@ export interface Project {
 }
 
 export interface PricingTier {
+  id?: string; // Optional for static fallback
   name: string;
   price: string;
   description: string;
   features: string[];
   recommended?: boolean;
+  is_recommended?: boolean; // DB field mapping
+  order_index?: number;
 }
 
 export interface Testimonial {
@@ -50,8 +53,10 @@ export interface Testimonial {
 }
 
 export interface FaqItem {
+  id?: string; // Optional for static fallback
   question: string;
   answer: string;
+  order_index?: number;
 }
 
 export interface BlogPost {

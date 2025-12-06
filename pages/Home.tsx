@@ -10,21 +10,22 @@ import ScrollReveal from '../components/ScrollReveal';
 import { SERVICES, PORTFOLIO, TESTIMONIALS } from '../constants';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { supabase } from '../lib/supabaseClient';
-import { Service } from '../types';
+import { Service, Testimonial } from '../types';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { settings } = useSiteSettings();
   const [featuredServices, setFeaturedServices] = useState<Service[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   
   // Projects still fallback to constants if needed for simplicity, or we could fetch top 2 dynamic ones
   const featuredProjects = PORTFOLIO.slice(0, 2);
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchData = async () => {
+      // Fetch Services
       try {
         const { data, error } = await supabase.from('services').select('*').limit(3).order('created_at', { ascending: true });
-        
         if (error || !data || data.length === 0) {
           setFeaturedServices(SERVICES.slice(0, 3));
         } else {
@@ -33,8 +34,20 @@ const Home: React.FC = () => {
       } catch (err) {
         setFeaturedServices(SERVICES.slice(0, 3));
       }
+
+      // Fetch Testimonials
+      try {
+        const { data, error } = await supabase.from('testimonials').select('*').limit(3).order('created_at', { ascending: false });
+        if (error || !data || data.length === 0) {
+          setTestimonials(TESTIMONIALS);
+        } else {
+          setTestimonials(data as Testimonial[]);
+        }
+      } catch (err) {
+        setTestimonials(TESTIMONIALS);
+      }
     };
-    fetchServices();
+    fetchData();
   }, []);
 
   return (
@@ -190,17 +203,17 @@ const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
            <SectionHeading title="Client Success Stories" centered />
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-             {TESTIMONIALS.map((t, idx) => (
+             {testimonials.map((t, idx) => (
                <ScrollReveal key={t.id} delay={idx * 0.1}>
-                 <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 h-full">
+                 <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 h-full flex flex-col">
                    <div className="flex items-center mb-6">
-                     <img src={t.avatar} alt={t.name} className="w-12 h-12 rounded-full mr-4" />
+                     <img src={t.avatar} alt={t.name} className="w-12 h-12 rounded-full mr-4 bg-slate-100 object-cover" />
                      <div>
                        <h4 className="font-bold text-slate-900">{t.name}</h4>
-                       <p className="text-sm text-slate-500">{t.role}, {t.company}</p>
+                       <p className="text-sm text-slate-500">{t.role}{t.company && `, ${t.company}`}</p>
                      </div>
                    </div>
-                   <p className="text-slate-600 italic">"{t.content}"</p>
+                   <p className="text-slate-600 italic flex-grow">"{t.content}"</p>
                  </div>
                </ScrollReveal>
              ))}

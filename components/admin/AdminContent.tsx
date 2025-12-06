@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import Card from '../ui/Card';
 import Button from '../Button';
 import Input from '../ui/Input';
-import { Save, Globe, Phone, Mail, MapPin, MessageSquare, Layout, Twitter, Linkedin, Instagram, Image as ImageIcon, Loader2, UploadCloud } from 'lucide-react';
+import { Save, Globe, Phone, Mail, MapPin, MessageSquare, Layout, Twitter, Linkedin, Instagram, Image as ImageIcon, Loader2, UploadCloud, Share2 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
 const AdminContent: React.FC = () => {
@@ -12,6 +12,7 @@ const AdminContent: React.FC = () => {
   const { success, error: showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingSocial, setIsUploadingSocial] = useState(false);
 
   // Local state for form management
   const [formData, setFormData] = useState(settings);
@@ -63,6 +64,35 @@ const AdminContent: React.FC = () => {
     }
   };
 
+  const handleSocialImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `og-image-${Date.now()}.${fileExt}`;
+    const filePath = `branding/${fileName}`;
+
+    setIsUploadingSocial(true);
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('uploads')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
+      
+      handleChange('og_image_url', data.publicUrl);
+      success('Social image uploaded successfully');
+    } catch (error: any) {
+      console.error('Error uploading social image:', error);
+      showError('Error uploading image: ' + error.message);
+    } finally {
+      setIsUploadingSocial(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-8">
@@ -82,10 +112,11 @@ const AdminContent: React.FC = () => {
             <div className="bg-brand-100 p-2 rounded-lg mr-3 text-brand-600">
                <ImageIcon size={20} />
             </div>
-            <h3 className="font-bold text-slate-900">Branding</h3>
+            <h3 className="font-bold text-slate-900">Branding & Identity</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             <div>
+          <div className="grid grid-cols-1 gap-8">
+             {/* Logo */}
+             <div className="border-b border-slate-100 pb-8">
                 <label className="block text-sm font-medium text-slate-700 mb-2">Company Logo</label>
                 <div className="flex items-center gap-4">
                    <div className="w-16 h-16 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center overflow-hidden">
@@ -113,10 +144,50 @@ const AdminContent: React.FC = () => {
                           {isUploading ? 'Uploading...' : 'Upload New Logo'}
                         </label>
                       </div>
-                      <p className="text-xs text-slate-500 mt-2">Recommended: PNG or SVG, 200x200px</p>
+                      <p className="text-xs text-slate-500 mt-2">Used in Navbar. Recommended: PNG or SVG, 200x200px</p>
                    </div>
                 </div>
              </div>
+
+             {/* Social Sharing Image */}
+             <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center">
+                  Social Sharing Image (OG Tag)
+                  <Share2 size={14} className="ml-2 text-slate-400" />
+                </label>
+                <div className="flex items-start gap-4">
+                   <div className="w-48 h-24 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center overflow-hidden relative group">
+                      {formData.og_image_url ? (
+                        <img src={formData.og_image_url} alt="Social Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs text-slate-400">No Image</span>
+                      )}
+                   </div>
+                   <div className="flex-1">
+                      <div className="relative">
+                        <input 
+                          type="file" 
+                          id="og-upload" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={handleSocialImageUpload}
+                          disabled={isUploadingSocial}
+                        />
+                        <label 
+                          htmlFor="og-upload"
+                          className={`inline-flex items-center justify-center px-4 py-2 border border-slate-300 rounded-lg cursor-pointer bg-white hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 ${isUploadingSocial ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {isUploadingSocial ? <Loader2 size={16} className="animate-spin mr-2" /> : <UploadCloud size={16} className="mr-2" />}
+                          {isUploadingSocial ? 'Uploading...' : 'Upload Banner'}
+                        </label>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Displayed when sharing link on WhatsApp/LinkedIn. Recommended: 1200x630px JPG/PNG.
+                      </p>
+                   </div>
+                </div>
+             </div>
+
              <div>
                <Input 
                  label="Company Name" 

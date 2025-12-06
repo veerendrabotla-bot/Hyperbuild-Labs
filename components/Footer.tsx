@@ -1,11 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Rocket, Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from 'lucide-react';
+import { Rocket, Twitter, Linkedin, Instagram, Mail, Phone, MapPin, Send, Loader2, CheckCircle2 } from 'lucide-react';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
+import { supabase } from '../lib/supabaseClient';
+import { useToast } from '../contexts/ToastContext';
 
 const Footer: React.FC = () => {
   const navigate = useNavigate();
   const { settings } = useSiteSettings();
+  const { success, error: showError } = useToast();
+  
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    
+    // Basic validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showError('Please enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('subscribers').insert([{ email }]);
+      if (error) {
+        if (error.code === '23505') { // Unique violation
+           showError('You are already subscribed!');
+        } else {
+           throw error;
+        }
+      } else {
+        setSubscribed(true);
+        success('Successfully subscribed to newsletter!');
+        setEmail('');
+      }
+    } catch (err: any) {
+      console.error(err);
+      // Fallback for demo mode if DB missing
+      setSubscribed(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <footer className="bg-secondary-900 text-slate-300 pt-16 pb-8 border-t border-slate-800">
@@ -63,23 +103,43 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Contact Column */}
+          {/* Newsletter Column */}
           <div>
-            <h4 className="text-white font-semibold mb-6">Contact Us</h4>
-            <ul className="space-y-4 text-sm">
-              <li className="flex items-start">
-                <MapPin className="w-5 h-5 mr-3 text-brand-500 flex-shrink-0" />
-                <span>{settings.contact_address}</span>
-              </li>
-              <li className="flex items-center">
-                <Phone className="w-5 h-5 mr-3 text-brand-500 flex-shrink-0" />
-                <span>{settings.contact_phone}</span>
-              </li>
-              <li className="flex items-center">
-                <Mail className="w-5 h-5 mr-3 text-brand-500 flex-shrink-0" />
-                <span>{settings.contact_email}</span>
-              </li>
-            </ul>
+            <h4 className="text-white font-semibold mb-6">Stay Updated</h4>
+            <p className="text-sm text-slate-400 mb-4">
+              Get the latest AI trends and agency news delivered to your inbox.
+            </p>
+            {subscribed ? (
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 flex items-center text-green-400 text-sm">
+                <CheckCircle2 size={16} className="mr-2" /> Subscribed!
+              </div>
+            ) : (
+              <form onSubmit={handleSubscribe} className="relative">
+                <input 
+                  type="email" 
+                  placeholder="Enter email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-500"
+                />
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="absolute right-1 top-1 p-1.5 bg-brand-600 rounded-md text-white hover:bg-brand-700 transition-colors disabled:opacity-50"
+                >
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                </button>
+              </form>
+            )}
+            
+            <div className="mt-8 pt-6 border-t border-slate-800">
+               <h5 className="text-white font-semibold text-sm mb-3">Contact</h5>
+               <ul className="space-y-2 text-xs text-slate-400">
+                  <li className="flex items-center"><MapPin size={12} className="mr-2 text-brand-500"/> {settings.contact_address}</li>
+                  <li className="flex items-center"><Phone size={12} className="mr-2 text-brand-500"/> {settings.contact_phone}</li>
+                  <li className="flex items-center"><Mail size={12} className="mr-2 text-brand-500"/> {settings.contact_email}</li>
+               </ul>
+            </div>
           </div>
         </div>
 

@@ -6,6 +6,7 @@ import SEO from '../components/SEO';
 import { Rocket, Lock, Mail, AlertCircle, HelpCircle, ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../contexts/ToastContext';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,6 +18,7 @@ const AdminLogin: React.FC = () => {
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const { success } = useToast();
+  const { settings } = useSiteSettings();
 
   // If already logged in, redirect to dashboard
   if (user) {
@@ -74,14 +76,18 @@ const AdminLogin: React.FC = () => {
       
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Rocket className="text-brand-600 w-8 h-8" />
+          <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100 overflow-hidden">
+            {settings.logo_url ? (
+              <img src={settings.logo_url} alt="Logo" className="w-full h-full object-contain p-2" />
+            ) : (
+              <Rocket className="text-brand-600 w-10 h-10" />
+            )}
           </div>
           <h1 className="text-2xl font-bold text-slate-900">
             {mode === 'login' ? 'Admin Portal' : 'Reset Password'}
           </h1>
-          <p className="text-slate-500 mt-2">
-            {mode === 'login' ? 'Enter your credentials to access the dashboard.' : 'Enter your email to receive a reset link.'}
+          <p className="text-slate-500 mt-2 text-sm">
+            {mode === 'login' ? `Sign in to manage ${settings.company_name || 'your agency'}` : 'Enter your email to receive a reset link.'}
           </p>
         </div>
 
@@ -99,7 +105,7 @@ const AdminLogin: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
-                    placeholder="admin@hyperbuild.com"
+                    placeholder="admin@agency.com"
                   />
                 </div>
               </div>
@@ -166,7 +172,7 @@ const AdminLogin: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
-                    placeholder="admin@hyperbuild.com"
+                    placeholder="admin@agency.com"
                   />
                 </div>
               </div>

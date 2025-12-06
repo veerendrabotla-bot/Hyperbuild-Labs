@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import Button from '../Button';
 import Input from '../ui/Input';
-import { ShieldCheck, Loader2, QrCode, User, Lock, Bell, Save, CheckCircle } from 'lucide-react';
+import { ShieldCheck, Loader2, QrCode, User, Lock, Bell, Save, CheckCircle, Globe, Copy } from 'lucide-react';
 import * as QRCode from 'qrcode';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,6 +25,13 @@ const AdminSettings: React.FC = () => {
     fullName: '',
     email: ''
   });
+  
+  // Notification Preferences
+  const [notifications, setNotifications] = useState({
+    emailAlerts: true,
+    weeklyReport: false
+  });
+  
   const [loadingProfile, setLoadingProfile] = useState(false);
 
   // Password State
@@ -34,6 +41,10 @@ const AdminSettings: React.FC = () => {
   });
   const [loadingPassword, setLoadingPassword] = useState(false);
 
+  // Sitemap State
+  const [sitemapXml, setSitemapXml] = useState('');
+  const [loadingSitemap, setLoadingSitemap] = useState(false);
+
   useEffect(() => {
     if (user) {
       // Fetch user metadata
@@ -42,6 +53,10 @@ const AdminSettings: React.FC = () => {
           fullName: data.user?.user_metadata?.full_name || '',
           email: data.user?.email || ''
         });
+        // Load saved preferences if they exist
+        if (data.user?.user_metadata?.notifications) {
+          setNotifications(data.user.user_metadata.notifications);
+        }
       });
     }
   }, [user]);
@@ -97,17 +112,20 @@ const AdminSettings: React.FC = () => {
     }
   };
 
-  // --- PROFILE LOGIC ---
+  // --- PROFILE & NOTIFICATIONS LOGIC ---
   const updateProfile = async () => {
     setLoadingProfile(true);
     try {
       const { error } = await supabase.auth.updateUser({
         email: profileData.email,
-        data: { full_name: profileData.fullName }
+        data: { 
+          full_name: profileData.fullName,
+          notifications: notifications 
+        }
       });
 
       if (error) throw error;
-      success('Profile updated successfully');
+      success('Profile & preferences updated successfully');
     } catch (err: any) {
       showError(err.message);
     } finally {
@@ -142,6 +160,74 @@ const AdminSettings: React.FC = () => {
     }
   };
 
+  // --- SITEMAP GENERATOR ---
+  const generateSitemap = async () => {
+    setLoadingSitemap(true);
+    try {
+      const baseUrl = window.location.origin;
+      const staticRoutes = ['', 'services', 'portfolio', 'pricing', 'about', 'contact', 'demo', 'blog'];
+      
+      // Fetch dynamic routes
+      const [projects, posts] = await Promise.all([
+        supabase.from('projects').select('id, created_at'),
+        supabase.from('posts').select('id, created_at')
+      ]);
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+`;
+
+      // Add Static Routes
+      staticRoutes.forEach(route => {
+        xml += `  <url>
+    <loc>${baseUrl}/#/${route}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>${route === '' ? '1.0' : '0.8'}</priority>
+  </url>
+`;
+      });
+
+      // Add Projects
+      if (projects.data) {
+        projects.data.forEach((p: any) => {
+          xml += `  <url>
+    <loc>${baseUrl}/#/portfolio/${p.id}</loc>
+    <lastmod>${new Date(p.created_at).toISOString().split('T')[0]}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+        });
+      }
+
+      // Add Blogs
+      if (posts.data) {
+        posts.data.forEach((p: any) => {
+          xml += `  <url>
+    <loc>${baseUrl}/#/blog/${p.id}</loc>
+    <lastmod>${new Date(p.created_at).toISOString().split('T')[0]}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+        });
+      }
+
+      xml += `</urlset>`;
+      setSitemapXml(xml);
+      success('Sitemap generated!');
+    } catch (err: any) {
+      showError('Failed to generate sitemap');
+    } finally {
+      setLoadingSitemap(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(sitemapXml);
+    success('Copied to clipboard');
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       
@@ -174,6 +260,86 @@ const AdminSettings: React.FC = () => {
                Save Changes
              </Button>
            </div>
+        </div>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+        <div className="flex items-center mb-6">
+          <div className="bg-purple-100 p-3 rounded-full mr-4">
+            <Bell className="text-purple-600 w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Notifications</h2>
+            <p className="text-slate-500 text-sm">Manage email alerts.</p>
+          </div>
+        </div>
+        <div className="border-t border-slate-100 pt-6 space-y-4">
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="font-medium text-slate-900">New Lead Alerts</p>
+               <p className="text-xs text-slate-500">Get an email when a new form is submitted.</p>
+             </div>
+             <label className="relative inline-flex items-center cursor-pointer">
+               <input 
+                 type="checkbox" 
+                 className="sr-only peer" 
+                 checked={notifications.emailAlerts}
+                 onChange={(e) => setNotifications({...notifications, emailAlerts: e.target.checked})}
+               />
+               <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+             </label>
+           </div>
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="font-medium text-slate-900">Weekly Report</p>
+               <p className="text-xs text-slate-500">Receive a summary of agency performance.</p>
+             </div>
+             <label className="relative inline-flex items-center cursor-pointer">
+               <input 
+                 type="checkbox" 
+                 className="sr-only peer" 
+                 checked={notifications.weeklyReport}
+                 onChange={(e) => setNotifications({...notifications, weeklyReport: e.target.checked})}
+               />
+               <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+             </label>
+           </div>
+           
+           <div className="flex justify-end mt-4">
+             <Button size="sm" variant="outline" onClick={updateProfile} isLoading={loadingProfile}>Update Preferences</Button>
+           </div>
+        </div>
+      </div>
+
+      {/* SEO & Sitemap */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+        <div className="flex items-center mb-6">
+          <div className="bg-green-100 p-3 rounded-full mr-4">
+            <Globe className="text-green-600 w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">SEO & Sitemap</h2>
+            <p className="text-slate-500 text-sm">Generate XML sitemap for Google Search Console.</p>
+          </div>
+        </div>
+        <div className="border-t border-slate-100 pt-6">
+           {!sitemapXml ? (
+             <Button onClick={generateSitemap} isLoading={loadingSitemap}>Generate Sitemap XML</Button>
+           ) : (
+             <div className="space-y-4">
+               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 h-40 overflow-y-auto font-mono text-xs text-slate-600">
+                 <pre>{sitemapXml}</pre>
+               </div>
+               <div className="flex gap-2">
+                 <Button size="sm" onClick={copyToClipboard} leftIcon={<Copy size={16}/>}>Copy XML</Button>
+                 <Button size="sm" variant="outline" onClick={() => setSitemapXml('')}>Clear</Button>
+               </div>
+               <p className="text-xs text-slate-500">
+                 Copy this XML and save it as <code>sitemap.xml</code> in your public folder, or submit it directly to search engines.
+               </p>
+             </div>
+           )}
         </div>
       </div>
 
@@ -272,41 +438,6 @@ const AdminSettings: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Notifications Simulation */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
-        <div className="flex items-center mb-6">
-          <div className="bg-purple-100 p-3 rounded-full mr-4">
-            <Bell className="text-purple-600 w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">Notifications</h2>
-            <p className="text-slate-500 text-sm">Manage email alerts.</p>
-          </div>
-        </div>
-        <div className="border-t border-slate-100 pt-6 space-y-4">
-           <div className="flex items-center justify-between">
-             <div>
-               <p className="font-medium text-slate-900">New Lead Alerts</p>
-               <p className="text-xs text-slate-500">Get an email when a new form is submitted.</p>
-             </div>
-             <label className="relative inline-flex items-center cursor-pointer">
-               <input type="checkbox" className="sr-only peer" defaultChecked />
-               <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
-             </label>
-           </div>
-           <div className="flex items-center justify-between">
-             <div>
-               <p className="font-medium text-slate-900">Weekly Report</p>
-               <p className="text-xs text-slate-500">Receive a summary of agency performance.</p>
-             </div>
-             <label className="relative inline-flex items-center cursor-pointer">
-               <input type="checkbox" className="sr-only peer" />
-               <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
-             </label>
-           </div>
         </div>
       </div>
 

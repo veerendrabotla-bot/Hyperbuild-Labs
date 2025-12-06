@@ -6,8 +6,10 @@ import Badge from '../ui/Badge';
 import Button from '../Button';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
-import { Plus, Download, FileText, Loader2, DollarSign, Filter, RefreshCw } from 'lucide-react';
+import { Plus, Download, FileText, Loader2, DollarSign, Filter, RefreshCw, Mail, Check } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
+import emailjs from '@emailjs/browser';
+import { EMAILJS_SERVICE_ID, EMAILJS_INVOICE_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../../constants';
 
 const AdminInvoices: React.FC = () => {
   const { success, error: showError } = useToast();
@@ -17,8 +19,10 @@ const AdminInvoices: React.FC = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newInvoice, setNewInvoice] = useState<Partial<Invoice>>({ client_name: '', amount: 0, status: 'draft' });
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
 
   useEffect(() => {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
     fetchInvoices();
   }, []);
 
@@ -47,6 +51,42 @@ const AdminInvoices: React.FC = () => {
     setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status } : inv));
     await supabase.from('invoices').update({ status }).eq('id', id);
     success('Status updated');
+  };
+
+  const sendInvoiceEmail = async (invoice: Invoice) => {
+    if (!invoice.client_email) {
+      showError('No client email on file for this invoice');
+      return;
+    }
+    
+    setSendingEmailId(invoice.id);
+    try {
+      if (EMAILJS_SERVICE_ID === 'service_placeholder' || !EMAILJS_INVOICE_TEMPLATE_ID) {
+        throw new Error("Email service not configured (Demo Mode)");
+      }
+
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INVOICE_TEMPLATE_ID, {
+        to_name: invoice.client_name,
+        to_email: invoice.client_email,
+        amount: `$${invoice.amount.toLocaleString()}`,
+        status: invoice.status.toUpperCase(),
+        due_date: invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'Upon Receipt',
+        invoice_link: `${window.location.origin}/#/invoices/${invoice.id}` // Hypothetical public link
+      });
+
+      success(`Invoice sent to ${invoice.client_email}`);
+      
+      // Auto update status to Sent if it was Draft
+      if (invoice.status === 'draft') {
+        updateStatus(invoice.id, 'sent');
+      }
+
+    } catch (err: any) {
+      console.error(err);
+      showError('Failed to send email: ' + (err.text || err.message));
+    } finally {
+      setSendingEmailId(null);
+    }
   };
 
   const exportCSV = () => {
@@ -163,20 +203,26 @@ const AdminInvoices: React.FC = () => {
                   <td className="px-6 py-4 text-sm text-slate-500">{new Date(inv.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Email Button */}
+                      {inv.client_email && (
+                        <button 
+                          onClick={() => sendInvoiceEmail(inv)}
+                          disabled={sendingEmailId === inv.id}
+                          className="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-brand-50 hover:text-brand-600 transition-colors disabled:opacity-50"
+                          title="Send Invoice via Email"
+                        >
+                          {sendingEmailId === inv.id ? <Loader2 size={16} className="animate-spin"/> : <Mail size={16} />}
+                        </button>
+                      )}
+                      
+                      {/* Status Toggles */}
                       {inv.status !== 'paid' && (
                         <button 
                           onClick={() => updateStatus(inv.id, 'paid')}
-                          className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded"
+                          className="p-1.5 bg-green-50 text-green-700 rounded hover:bg-green-100"
+                          title="Mark Paid"
                         >
-                          Mark Paid
-                        </button>
-                      )}
-                      {inv.status === 'draft' && (
-                        <button 
-                          onClick={() => updateStatus(inv.id, 'sent')}
-                          className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded"
-                        >
-                          Mark Sent
+                          <Check size={16} />
                         </button>
                       )}
                     </div>

@@ -19,11 +19,15 @@ export const WHATSAPP_LINK = "https://wa.me/1234567890"; // Placeholder
 export const EMAILJS_SERVICE_ID = "service_placeholder"; 
 export const EMAILJS_TEMPLATE_ID = "template_placeholder"; // Admin Notification
 export const EMAILJS_AUTO_REPLY_TEMPLATE_ID = "template_auto_reply_placeholder"; // User Confirmation
+export const EMAILJS_INVOICE_TEMPLATE_ID = "template_invoice_placeholder"; // Invoice Notification
 export const EMAILJS_PUBLIC_KEY = "public_key_placeholder";
 
 // Supabase Configuration
 export const SUPABASE_URL = "https://wdramugnkamysedaxnjm.supabase.co";
 export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkcmFtdWdua2FteXNlZGF4bmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzOTkyNzksImV4cCI6MjA3OTk3NTI3OX0.EQ-Fh5A5QT9atNT7JqEBFyLkSidmaC6TwGbkT_I7j9c";
+
+// Google Analytics
+export const GOOGLE_ANALYTICS_ID = "G-XXXXXXXXXX"; // Replace with your Measurement ID
 
 export const SERVICES: Service[] = [
   {
