@@ -3,14 +3,12 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', '');
+  const env = loadEnv(mode, (process as any).cwd(), '');
   return {
     plugins: [react()],
     define: {
-      // Prevents "process is not defined" error in browser
-      'process.env': {
-        API_KEY: JSON.stringify(env.API_KEY)
-      }
+      // Safely define process.env.API_KEY without overwriting the entire process.env object
+      'process.env.API_KEY': JSON.stringify(env.API_KEY)
     }
   };
 });

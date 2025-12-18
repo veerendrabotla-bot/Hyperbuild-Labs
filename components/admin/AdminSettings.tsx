@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import Button from '../Button';
 import Input from '../ui/Input';
-import { ShieldCheck, Loader2, QrCode, User, Lock, Bell, Save, CheckCircle, Globe, Copy } from 'lucide-react';
+import { ShieldCheck, Loader2, QrCode, User, Lock, Bell, Save, CheckCircle, Globe, Copy, AlertTriangle, Construction } from 'lucide-react';
 import * as QRCode from 'qrcode';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSiteSettings } from '../../contexts/SiteSettingsContext';
 
 const AdminSettings: React.FC = () => {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
+  const { settings, updateSetting } = useSiteSettings();
   
   // 2FA State
   const [enrollmentId, setEnrollmentId] = useState('');
@@ -45,6 +47,10 @@ const AdminSettings: React.FC = () => {
   const [sitemapXml, setSitemapXml] = useState('');
   const [loadingSitemap, setLoadingSitemap] = useState(false);
 
+  // Maintenance Mode
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [loadingMaintenance, setLoadingMaintenance] = useState(false);
+
   useEffect(() => {
     if (user) {
       // Fetch user metadata
@@ -59,7 +65,11 @@ const AdminSettings: React.FC = () => {
         }
       });
     }
-  }, [user]);
+    // Load global maintenance setting
+    if (settings.maintenance_mode) {
+      setMaintenanceMode(settings.maintenance_mode === 'true');
+    }
+  }, [user, settings]);
 
   // --- 2FA LOGIC ---
   const startEnrollment = async () => {
@@ -228,9 +238,56 @@ const AdminSettings: React.FC = () => {
     success('Copied to clipboard');
   };
 
+  // --- MAINTENANCE MODE ---
+  const toggleMaintenance = async () => {
+    setLoadingMaintenance(true);
+    const newValue = !maintenanceMode;
+    try {
+      await updateSetting('maintenance_mode', String(newValue));
+      setMaintenanceMode(newValue);
+      success(newValue ? 'Maintenance Mode Enabled' : 'Maintenance Mode Disabled');
+    } catch (err) {
+      showError('Failed to update maintenance mode');
+    } finally {
+      setLoadingMaintenance(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       
+      {/* Maintenance Mode */}
+      <div className={`rounded-xl shadow-sm border p-8 transition-colors ${maintenanceMode ? 'bg-orange-50 border-orange-200' : 'bg-white border-slate-200'}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className={`p-3 rounded-full mr-4 ${maintenanceMode ? 'bg-orange-200 text-orange-700' : 'bg-slate-100 text-slate-500'}`}>
+              <Construction className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className={`text-xl font-bold ${maintenanceMode ? 'text-orange-900' : 'text-slate-900'}`}>Maintenance Mode</h2>
+              <p className={`text-sm ${maintenanceMode ? 'text-orange-700' : 'text-slate-500'}`}>
+                {maintenanceMode 
+                  ? 'Website is currently offline for public users. Admin panel remains accessible.' 
+                  : 'Website is live and accessible to everyone.'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+             {loadingMaintenance && <Loader2 className="animate-spin text-slate-400" />}
+             <label className="relative inline-flex items-center cursor-pointer">
+               <input 
+                 type="checkbox" 
+                 className="sr-only peer" 
+                 checked={maintenanceMode}
+                 onChange={toggleMaintenance}
+                 disabled={loadingMaintenance}
+               />
+               <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-500"></div>
+             </label>
+          </div>
+        </div>
+      </div>
+
       {/* Profile Section */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
         <div className="flex items-center mb-6">
