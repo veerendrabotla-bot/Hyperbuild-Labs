@@ -108,6 +108,8 @@ export const PORTFOLIO: Project[] = [
     // Added missing required enterprise fields
     total_amount: 15000,
     paid_amount: 15000,
+    // Fixed: Added missing required currency property
+    currency: 'USD',
     show_repo: false,
     show_docs: true,
     show_live: true,
@@ -124,7 +126,7 @@ export const PORTFOLIO: Project[] = [
     techStack: ['Shopify Plus', 'Three.js', 'Tailwind', 'Node.js'],
     client: 'LuxeCart Fashion',
     duration: '2 Months',
-    challenge: 'High cart abandonment rates on mobile devices and a lack of trust in product quality from online visitors were stifling growth.',
+    challenge: 'High cart abandonment rates on mobile devices and a trust in product quality from online visitors were stifling growth.',
     solution: 'We developed a headless Shopify store with a focus on mobile-first speed. We integrated a Three.js AR viewer allowing customers to see products in 3D space.',
     // Set mandatory status property for portfolio projects
     status: 'completed',
@@ -140,6 +142,8 @@ export const PORTFOLIO: Project[] = [
     // Added missing required enterprise fields
     total_amount: 8500,
     paid_amount: 8500,
+    // Fixed: Added missing required currency property
+    currency: 'USD',
     show_repo: false,
     show_docs: false,
     show_live: true,
@@ -172,6 +176,8 @@ export const PORTFOLIO: Project[] = [
     // Added missing required enterprise fields
     total_amount: 4500,
     paid_amount: 4500,
+    // Fixed: Added missing required currency property
+    currency: 'USD',
     show_repo: true,
     show_docs: true,
     show_live: false,
@@ -204,6 +210,8 @@ export const PORTFOLIO: Project[] = [
     // Added missing required enterprise fields
     total_amount: 12000,
     paid_amount: 12000,
+    // Fixed: Added missing required currency property
+    currency: 'USD',
     show_repo: false,
     show_docs: true,
     show_live: true,
@@ -216,12 +224,14 @@ export const PRICING: PricingTier[] = [
   {
     name: 'Starter',
     price: '$999',
+    currency: 'USD', // Fixed: Added missing required currency property
     description: 'Perfect for small businesses needing a professional presence.',
     features: ['5-Page Responsive Website', 'Basic SEO Setup', 'Contact Form Integration', '1 Month Support']
   },
   {
     name: 'Growth',
     price: '$2,499',
+    currency: 'USD', // Fixed: Added missing required currency property
     description: 'For businesses ready to scale with automation and better design.',
     features: ['10-Page Custom Website', 'CMS Integration', 'Basic AI Chatbot', 'WhatsApp Integration', 'Google Analytics'],
     recommended: true
@@ -229,6 +239,7 @@ export const PRICING: PricingTier[] = [
   {
     name: 'Enterprise',
     price: 'Custom',
+    currency: 'USD', // Fixed: Added missing required currency property
     description: 'Full-scale digital transformation and custom AI solutions.',
     features: ['Custom Web Application', 'Advanced AI Agents', 'Full CRM Automation', 'Priority 24/7 Support', 'Dedicated Manager']
   }

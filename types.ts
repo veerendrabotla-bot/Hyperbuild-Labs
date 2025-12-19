@@ -42,6 +42,7 @@ export interface Project {
   // Enterprise Financials
   total_amount: number;
   paid_amount: number;
+  currency: 'USD' | 'INR';
   
   // Visibility Toggles (Feature Flags)
   show_repo: boolean;
@@ -55,6 +56,7 @@ export interface PricingTier {
   id?: string;
   name: string;
   price: string;
+  currency: 'USD' | 'INR';
   description: string;
   features: string[];
   recommended?: boolean;
@@ -145,6 +147,7 @@ export interface Invoice {
   client_name: string;
   client_email?: string;
   amount: number;
+  currency: 'USD' | 'INR';
   status: 'draft' | 'sent' | 'paid' | 'overdue';
   due_date?: string;
   created_at: string;

@@ -10,7 +10,7 @@ import Badge from '../ui/Badge';
 import { 
   Loader2, Edit2, Trash2, Save, Plus, Eye, EyeOff, User, 
   Mail, Globe, AlertCircle, DollarSign, Wallet, Code2, 
-  FileText, CheckCircle, ShieldAlert, Power, Layout
+  FileText, CheckCircle, ShieldAlert, Power, Layout, IndianRupee
 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -36,6 +36,7 @@ const AdminProjects: React.FC = () => {
     live_link: '',
     total_amount: 0,
     paid_amount: 0,
+    currency: 'USD',
     show_repo: true,
     show_docs: true,
     show_live: true,
@@ -68,6 +69,7 @@ const AdminProjects: React.FC = () => {
         is_active: p.is_active ?? true,
         total_amount: p.total_amount || 0,
         paid_amount: p.paid_amount || 0,
+        currency: p.currency || 'USD',
         show_repo: p.show_repo ?? true,
         show_docs: p.show_docs ?? true,
         show_live: p.show_live ?? true,
@@ -78,7 +80,7 @@ const AdminProjects: React.FC = () => {
       setProjects(mapped as Project[]);
     } catch (error: any) {
       console.error('Fetch error:', error);
-      showError('Sync failed. Ensure DB schema is updated with is_active.');
+      showError('Database sync failed.');
     } finally {
       setIsLoading(false);
     }
@@ -107,6 +109,7 @@ const AdminProjects: React.FC = () => {
       results: currentProject.results || [],
       total_amount: currentProject.total_amount || 0,
       paid_amount: currentProject.paid_amount || 0,
+      currency: currentProject.currency || 'USD',
       show_repo: currentProject.show_repo,
       show_docs: currentProject.show_docs,
       show_live: currentProject.show_live,
@@ -118,29 +121,29 @@ const AdminProjects: React.FC = () => {
       if (currentProject.id) {
         const { error } = await supabase.from('projects').update(payload).eq('id', currentProject.id);
         if (error) throw error;
-        success('Project persistent record updated');
+        success('Project record updated');
       } else {
         const { error } = await supabase.from('projects').insert([payload]);
         if (error) throw error;
-        success('New project engine initialized');
+        success('New project initialized');
       }
       setIsModalOpen(false);
       fetchProjects();
     } catch (error: any) {
-      showError(`Critical: ${error.message}`);
+      showError(`Error: ${error.message}`);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('IRREVERSIBLE: Wipe project from database?')) return;
+    if (!window.confirm('IRREVERSIBLE: Delete project data?')) return;
     setDeletingId(id);
     try {
       const { error } = await supabase.from('projects').delete().eq('id', id);
       if (error) throw error;
       setProjects(prev => prev.filter(p => p.id !== id));
-      success('Record purged');
+      success('Purged successfully');
     } catch (error: any) {
-      showError('Deletion error');
+      showError('Delete failed');
     } finally {
       setDeletingId(null);
     }
@@ -153,15 +156,17 @@ const AdminProjects: React.FC = () => {
   const clientProjects = projects.filter(p => !p.is_portfolio);
   const portfolioProjects = projects.filter(p => p.is_portfolio);
 
+  const getCurrencySymbol = (cur: string | undefined) => cur === 'INR' ? '₹' : '$';
+
   return (
     <div className="space-y-10 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-8 rounded-3xl border border-slate-200 shadow-sm gap-4">
         <div>
-           <h2 className="text-2xl font-black text-slate-900 tracking-tight">Project Infrastructure</h2>
-           <p className="text-sm text-slate-500 font-medium">Global status control and granular asset visibility.</p>
+           <h2 className="text-2xl font-black text-slate-900 tracking-tight">Project Management</h2>
+           <p className="text-sm text-slate-500 font-medium">Control visibility, delivery status, and financial ledgers.</p>
         </div>
-        <Button onClick={() => { setCurrentProject({ title: '', status: 'planning', is_portfolio: false, is_active: true, show_repo: true, show_docs: true, show_live: true, show_financials: true, show_lifecycle: true, total_amount: 0, paid_amount: 0 }); setIsModalOpen(true); }} leftIcon={<Plus size={20} />}>
-          Initiate Project
+        <Button onClick={() => { setCurrentProject({ title: '', status: 'planning', is_portfolio: false, is_active: true, show_repo: true, show_docs: true, show_live: true, show_financials: true, show_lifecycle: true, total_amount: 0, paid_amount: 0, currency: 'USD' }); setIsModalOpen(true); }} leftIcon={<Plus size={20} />}>
+          Initiate New Project
         </Button>
       </div>
 
@@ -191,127 +196,142 @@ const AdminProjects: React.FC = () => {
         </>
       )}
 
-      {/* Modern High-Efficiency Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Configure Project Output" size="xl">
-        {/* Global Visibility Header */}
+      {/* Simplified Unified Modal */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Configure Project" size="xl">
+        {/* Global Access Switch */}
         <div className={`mb-8 p-6 rounded-2xl border transition-all flex items-center justify-between ${currentProject.is_active ? 'bg-brand-50 border-brand-100' : 'bg-red-50 border-red-100'}`}>
            <div className="flex items-center gap-4">
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${currentProject.is_active ? 'bg-brand-600 text-white' : 'bg-red-600 text-white'}`}>
-                 {currentProject.is_active ? <Power size={24} /> : <ShieldAlert size={24} />}
+                 {currentProject.is_active ? <CheckCircle size={24} /> : <Power size={24} />}
               </div>
               <div>
-                 <h4 className={`text-lg font-black ${currentProject.is_active ? 'text-brand-900' : 'text-red-900'}`}>Global Master Toggle</h4>
-                 <p className={`text-xs font-bold uppercase tracking-tight ${currentProject.is_active ? 'text-brand-600' : 'text-red-600'}`}>
-                   {currentProject.is_active ? 'Project is visible to client & authorized parties' : 'Project is completely disabled (Dark Mode)'}
+                 <h4 className={`text-lg font-black ${currentProject.is_active ? 'text-brand-900' : 'text-red-900'}`}>Global Visibility Switch</h4>
+                 <p className={`text-xs font-bold uppercase ${currentProject.is_active ? 'text-brand-600' : 'text-red-600'}`}>
+                   {currentProject.is_active ? 'Visible to client and authorized systems' : 'Project hidden from all public and client endpoints'}
                  </p>
               </div>
            </div>
            <button 
              onClick={() => toggleField('is_active')}
-             className={`px-6 py-2 rounded-xl font-black text-sm uppercase transition-all shadow-md ${currentProject.is_active ? 'bg-brand-600 text-white hover:bg-brand-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
+             className={`px-6 py-2 rounded-xl font-black text-xs uppercase transition-all shadow-md ${currentProject.is_active ? 'bg-brand-600 text-white hover:bg-brand-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
            >
-             {currentProject.is_active ? 'DEACTIVATE' : 'ACTIVATE'}
+             {currentProject.is_active ? 'ACTIVE' : 'INACTIVE'}
            </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
            
+           {/* Column 1: Context & Financials */}
            <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                 <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1"><User size={10}/> Client Identification</h5>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                 <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Context & Core</h5>
                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-slate-500">SHOW ON WEBSITE:</span>
-                    <button onClick={() => toggleField('is_portfolio')} className={`p-1.5 rounded-lg transition-colors ${currentProject.is_portfolio ? 'bg-brand-100 text-brand-600' : 'bg-slate-100 text-slate-400'}`}>
-                       {currentProject.is_portfolio ? <Eye size={16} /> : <EyeOff size={16} />}
+                    <span className="text-[10px] font-black text-slate-500">PUBLIC SITE:</span>
+                    <button onClick={() => toggleField('is_portfolio')} className={`p-1 rounded transition-colors ${currentProject.is_portfolio ? 'text-brand-600' : 'text-slate-300'}`}>
+                       {currentProject.is_portfolio ? <Eye size={18} /> : <EyeOff size={18} />}
                     </button>
                  </div>
               </div>
-              <Input label="Internal Project Name" value={currentProject.title} onChange={e => setCurrentProject({...currentProject, title: e.target.value})} />
+              <Input label="Project Name" value={currentProject.title} onChange={e => setCurrentProject({...currentProject, title: e.target.value})} />
               <div className="grid grid-cols-2 gap-4">
-                <Input label="Client" value={currentProject.client} onChange={e => setCurrentProject({...currentProject, client: e.target.value})} icon={<User size={14}/>} />
+                <Input label="Client Name" value={currentProject.client} onChange={e => setCurrentProject({...currentProject, client: e.target.value})} icon={<User size={14}/>} />
                 <Input label="Auth Email" value={currentProject.client_email} onChange={e => setCurrentProject({...currentProject, client_email: e.target.value})} icon={<Mail size={14}/>} />
               </div>
               
               <div className="pt-4">
                 <div className="flex items-center justify-between mb-2">
-                   <label className="text-sm font-black text-slate-700">Project Execution Phase</label>
-                   <button onClick={() => toggleField('show_lifecycle')} className={`p-1 rounded-lg ${currentProject.show_lifecycle ? 'text-brand-600' : 'text-slate-300'}`}>
+                   <label className="text-sm font-bold text-slate-700">Project Execution Phase</label>
+                   <button onClick={() => toggleField('show_lifecycle')} className={`p-1 rounded transition-colors ${currentProject.show_lifecycle ? 'text-brand-600' : 'text-slate-300'}`}>
                      {currentProject.show_lifecycle ? <Eye size={16}/> : <EyeOff size={16}/>}
                    </button>
                 </div>
                 <select className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-700" value={currentProject.status} onChange={e => setCurrentProject({...currentProject, status: e.target.value as any})}>
-                   <option value="planning">Phase 1: Planning / Strategy</option>
-                   <option value="development">Phase 2: Active Development</option>
-                   <option value="review">Phase 3: QA / Security Audit</option>
-                   <option value="completed">Phase 4: Production Handover</option>
+                   <option value="planning">Phase 1: Planning / Setup</option>
+                   <option value="development">Phase 2: Active Build</option>
+                   <option value="review">Phase 3: Quality Audit</option>
+                   <option value="completed">Phase 4: Done / Handover</option>
                 </select>
               </div>
 
+              {/* Financial Ledger Section */}
               <div className="pt-6 space-y-4">
-                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1"><DollarSign size={10}/> Financial Ledger</h5>
-                    <button onClick={() => toggleField('show_financials')} className={`p-1 rounded-lg ${currentProject.show_financials ? 'text-brand-600' : 'text-slate-300'}`}>
-                      {currentProject.show_financials ? <Eye size={16}/> : <EyeOff size={16}/>}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <div className="flex bg-slate-100 p-1 rounded-lg">
+                        <button onClick={() => setCurrentProject({...currentProject, currency: 'USD'})} className={`px-2 py-0.5 text-[10px] font-black rounded ${currentProject.currency === 'USD' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400'}`}>USD</button>
+                        <button onClick={() => setCurrentProject({...currentProject, currency: 'INR'})} className={`px-2 py-0.5 text-[10px] font-black rounded ${currentProject.currency === 'INR' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400'}`}>INR</button>
+                      </div>
+                      <button onClick={() => toggleField('show_financials')} className={`p-1 rounded transition-colors ${currentProject.show_financials ? 'text-brand-600' : 'text-slate-300'}`}>
+                        {currentProject.show_financials ? <Eye size={16}/> : <EyeOff size={16}/>}
+                      </button>
+                    </div>
                  </div>
                  <div className="grid grid-cols-2 gap-4">
-                    <Input label="Contract Value ($)" type="number" value={currentProject.total_amount} onChange={e => setCurrentProject({...currentProject, total_amount: Number(e.target.value)})} icon={<DollarSign size={14}/>} />
-                    <Input label="Payment History ($)" type="number" value={currentProject.paid_amount} onChange={e => setCurrentProject({...currentProject, paid_amount: Number(e.target.value)})} icon={<Wallet size={14}/>} />
+                    <Input label={`Contract Value (${getCurrencySymbol(currentProject.currency)})`} type="number" value={currentProject.total_amount} onChange={e => setCurrentProject({...currentProject, total_amount: Number(e.target.value)})} icon={currentProject.currency === 'INR' ? <IndianRupee size={14}/> : <DollarSign size={14}/>} />
+                    <Input label={`Paid to Date (${getCurrencySymbol(currentProject.currency)})`} type="number" value={currentProject.paid_amount} onChange={e => setCurrentProject({...currentProject, paid_amount: Number(e.target.value)})} icon={currentProject.currency === 'INR' ? <IndianRupee size={14}/> : <Wallet size={14}/>} />
                  </div>
-                 <div className="bg-secondary-900 p-5 rounded-2xl flex justify-between items-center text-white border border-slate-700 shadow-xl">
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Balance Outstanding</span>
-                    <span className="text-2xl font-black text-brand-400">${((currentProject.total_amount || 0) - (currentProject.paid_amount || 0)).toLocaleString()}</span>
+                 <div className="bg-slate-900 p-5 rounded-2xl flex justify-between items-center text-white border border-slate-700">
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Amount Outstanding</span>
+                    <span className="text-2xl font-black text-brand-400">{getCurrencySymbol(currentProject.currency)}{((currentProject.total_amount || 0) - (currentProject.paid_amount || 0)).toLocaleString()}</span>
                  </div>
               </div>
            </div>
 
+           {/* Column 2: Digital Assets */}
            <div className="space-y-6">
-              <div className="border-b border-slate-100 pb-3">
-                 <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1"><Code2 size={10}/> Technical Delivery Endpoints</h5>
+              <div className="border-b border-slate-100 pb-2">
+                 <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Engineering Assets</h5>
               </div>
               
               <div className="space-y-6">
                  <div className="group">
                     <div className="flex items-center justify-between mb-2">
-                       <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Source Repository</label>
-                       <button onClick={() => toggleField('show_repo')} className={`p-1 rounded-lg transition-all ${currentProject.show_repo ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-300'}`}>
+                       <label className="text-xs font-bold text-slate-500 uppercase tracking-tight flex items-center gap-1.5"><Code2 size={12}/> Repository Endpoint</label>
+                       <button onClick={() => toggleField('show_repo')} className={`p-1 rounded transition-colors ${currentProject.show_repo ? 'text-brand-600' : 'text-slate-300'}`}>
                           {currentProject.show_repo ? <Eye size={16} /> : <EyeOff size={16} />}
                        </button>
                     </div>
-                    <Input value={currentProject.repo_link} onChange={e => setCurrentProject({...currentProject, repo_link: e.target.value})} icon={<Code2 size={14}/>} placeholder="Git Endpoint URL" />
+                    <Input value={currentProject.repo_link} onChange={e => setCurrentProject({...currentProject, repo_link: e.target.value})} placeholder="https://github.com/..." />
                  </div>
 
                  <div className="group">
                     <div className="flex items-center justify-between mb-2">
-                       <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Live Preview Staging</label>
-                       <button onClick={() => toggleField('show_live')} className={`p-1 rounded-lg transition-all ${currentProject.show_live ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-300'}`}>
+                       <label className="text-xs font-bold text-slate-500 uppercase tracking-tight flex items-center gap-1.5"><Globe size={12}/> Live Preview / Staging</label>
+                       <button onClick={() => toggleField('show_live')} className={`p-1 rounded transition-colors ${currentProject.show_live ? 'text-brand-600' : 'text-slate-300'}`}>
                           {currentProject.show_live ? <Eye size={16} /> : <EyeOff size={16} />}
                        </button>
                     </div>
-                    <Input value={currentProject.live_link} onChange={e => setCurrentProject({...currentProject, live_link: e.target.value})} icon={<Globe size={14}/>} placeholder="Staging URL" />
+                    <Input value={currentProject.live_link} onChange={e => setCurrentProject({...currentProject, live_link: e.target.value})} placeholder="https://staging.agency.com/..." />
                  </div>
 
                  <div className="group">
                     <div className="flex items-center justify-between mb-2">
-                       <label className="text-xs font-black text-slate-500 uppercase tracking-tight">Engineering Docs</label>
-                       <button onClick={() => toggleField('show_docs')} className={`p-1 rounded-lg transition-all ${currentProject.show_docs ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-300'}`}>
+                       <label className="text-xs font-bold text-slate-500 uppercase tracking-tight flex items-center gap-1.5"><FileText size={12}/> Engineering Documentation</label>
+                       <button onClick={() => toggleField('show_docs')} className={`p-1 rounded transition-colors ${currentProject.show_docs ? 'text-brand-600' : 'text-slate-300'}`}>
                           {currentProject.show_docs ? <Eye size={16} /> : <EyeOff size={16} />}
                        </button>
                     </div>
-                    <Input value={currentProject.documentation_link} onChange={e => setCurrentProject({...currentProject, documentation_link: e.target.value})} icon={<FileText size={14}/>} placeholder="Technical Handover URL" />
+                    <Input value={currentProject.documentation_link} onChange={e => setCurrentProject({...currentProject, documentation_link: e.target.value})} placeholder="Notion / Google Drive Link" />
                  </div>
               </div>
 
               <div className="pt-6 border-t border-slate-50">
-                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Project Banner Image</label>
-                 <Input value={currentProject.image} onChange={e => setCurrentProject({...currentProject, image: e.target.value})} icon={<Layout size={14}/>} placeholder="Visual Reference URL" />
+                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Project Showcase Image URL</label>
+                 <Input value={currentProject.image} onChange={e => setCurrentProject({...currentProject, image: e.target.value})} icon={<Layout size={14}/>} placeholder="Picsum or CDN URL" />
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-start gap-3">
+                 <AlertCircle className="text-blue-500 mt-0.5" size={16} />
+                 <p className="text-[10px] text-blue-700 font-bold uppercase tracking-tight leading-relaxed">
+                    Eye toggles directly control visibility in the tracking hub. Toggled items are instantly hidden from the client view.
+                 </p>
               </div>
            </div>
         </div>
-        
         <div className="mt-10 pt-6 border-t flex justify-end gap-3">
-           <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Discard Session</Button>
-           <Button onClick={handleSave} leftIcon={<Save size={18}/>} className="px-8 shadow-xl shadow-brand-500/20">Commit Project Version</Button>
+           <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Discard</Button>
+           <Button onClick={handleSave} leftIcon={<Save size={18}/>} className="px-8 shadow-xl shadow-brand-500/20">Commit Changes</Button>
         </div>
       </Modal>
     </div>
@@ -321,8 +341,8 @@ const AdminProjects: React.FC = () => {
 const ProjectEntryCard: React.FC<{ project: Project; isDeleting: boolean; onEdit: () => void; onDelete: () => void }> = ({ project, isDeleting, onEdit, onDelete }) => (
   <Card className={`group overflow-hidden border-slate-200 transition-all duration-300 relative ${isDeleting ? 'opacity-50 grayscale pointer-events-none' : ''} ${!project.is_active ? 'bg-slate-50 grayscale' : 'hover:border-brand-400 hover:shadow-2xl'}`} noPadding>
     <div className="h-40 relative overflow-hidden bg-slate-100">
-       <img src={project.image} alt={project.title} className={`w-full h-full object-cover transition-opacity ${!project.is_active ? 'opacity-40' : ''}`} />
-       <div className="absolute inset-0 bg-secondary-900/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+       <img src={project.image} alt={project.title} className={`w-full h-full object-cover transition-opacity ${!project.is_active ? 'opacity-30' : ''}`} />
+       <div className="absolute inset-0 bg-slate-900/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
           <button onClick={onEdit} className="bg-white p-3 rounded-xl text-brand-600 hover:scale-110 active:scale-95 transition-all shadow-xl"><Edit2 size={20}/></button>
           <button onClick={onDelete} className="bg-white p-3 rounded-xl text-red-600 hover:scale-110 active:scale-95 transition-all shadow-xl"><Trash2 size={20}/></button>
        </div>
@@ -341,7 +361,7 @@ const ProjectEntryCard: React.FC<{ project: Project; isDeleting: boolean; onEdit
       <h3 className={`font-black truncate mb-1 text-lg ${!project.is_active ? 'text-slate-400' : 'text-slate-900'}`}>{project.title}</h3>
       <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 mb-6">
          <span className="flex items-center gap-1 truncate max-w-[60%]"><User size={10} className="text-brand-500" /> {project.client}</span>
-         <span className="text-brand-600 font-black">${project.total_amount.toLocaleString()}</span>
+         <span className="text-brand-600 font-black">{project.currency === 'INR' ? '₹' : '$'}{project.total_amount.toLocaleString()}</span>
       </div>
       
       <div className="grid grid-cols-5 gap-1.5 pt-4 border-t border-slate-50">
@@ -349,7 +369,7 @@ const ProjectEntryCard: React.FC<{ project: Project; isDeleting: boolean; onEdit
            { icon: Code2, active: project.show_repo, tip: 'Repo' },
            { icon: Globe, active: project.show_live, tip: 'Live' },
            { icon: FileText, active: project.show_docs, tip: 'Docs' },
-           { icon: DollarSign, active: project.show_financials, tip: 'Ledger' },
+           { icon: DollarSign, active: project.show_financials, tip: 'Cash' },
            { icon: CheckCircle, active: project.show_lifecycle, tip: 'Flow' }
          ].map((item, i) => (
            <div key={i} className={`p-2 rounded flex justify-center transition-all ${item.active ? 'bg-brand-50 text-brand-600 border border-brand-100' : 'bg-slate-50 text-slate-200 border border-slate-100'}`} title={item.tip}>

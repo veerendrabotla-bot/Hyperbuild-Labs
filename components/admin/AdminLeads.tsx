@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Lead } from '../../types';
-import { Search, Loader2, ChevronDown, ChevronUp, Save, FileText, Phone, RefreshCw, Download, Mail, Zap } from 'lucide-react';
+import { Search, Loader2, ChevronDown, ChevronUp, Save, FileText, Phone, RefreshCw, Download, Mail, Zap, Target } from 'lucide-react';
 import Button from '../Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
@@ -213,187 +213,155 @@ const AdminLeads: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="animate-fadeIn">
       {/* View Toggle */}
-      <div className="flex gap-4 mb-6 border-b border-slate-200">
+      <div className="flex gap-4 mb-8 border-b border-slate-200 bg-white p-1 rounded-t-xl">
          <button 
            onClick={() => setView('leads')}
-           className={`pb-3 px-4 font-medium text-sm transition-colors relative ${view === 'leads' ? 'text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+           className={`pb-4 px-6 text-xs font-black uppercase tracking-widest transition-all relative ${view === 'leads' ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
          >
            Leads CRM
-           {view === 'leads' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-600 rounded-t-full"></span>}
+           {view === 'leads' && <span className="absolute bottom-0 left-0 w-full h-1 bg-brand-600 rounded-t-full"></span>}
          </button>
          <button 
            onClick={() => setView('subscribers')}
-           className={`pb-3 px-4 font-medium text-sm transition-colors relative ${view === 'subscribers' ? 'text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+           className={`pb-4 px-6 text-xs font-black uppercase tracking-widest transition-all relative ${view === 'subscribers' ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
          >
-           Newsletter Subscribers
-           {view === 'subscribers' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-600 rounded-t-full"></span>}
+           Newsletter
+           {view === 'subscribers' && <span className="absolute bottom-0 left-0 w-full h-1 bg-brand-600 rounded-t-full"></span>}
          </button>
       </div>
 
       {view === 'leads' ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card className="flex items-center">
-               <div className="bg-blue-50 p-3 rounded-full mr-4 text-blue-600 font-bold text-xl">{leads.filter(l => l.status === 'new').length}</div>
-               <div><p className="text-sm text-slate-500">New Leads</p><p className="font-bold text-slate-900">Action Required</p></div>
-            </Card>
-            <Card className="flex items-center">
-               <div className="bg-yellow-50 p-3 rounded-full mr-4 text-yellow-600 font-bold text-xl">{leads.filter(l => l.status === 'contacted').length}</div>
-               <div><p className="text-sm text-slate-500">In Progress</p><p className="font-bold text-slate-900">Contacted</p></div>
-            </Card>
-            <Card className="flex items-center">
-               <div className="bg-green-50 p-3 rounded-full mr-4 text-green-600 font-bold text-xl">{leads.filter(l => l.status === 'closed').length}</div>
-               <div><p className="text-sm text-slate-500">Won</p><p className="font-bold text-slate-900">Closed Deals</p></div>
-            </Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <StatSmall label="Ingress" count={leads.filter(l => l.status === 'new').length} color="blue" subtitle="Awaiting Action" />
+            <StatSmall label="Engagement" count={leads.filter(l => l.status === 'contacted').length} color="yellow" subtitle="Strategic Dialog" />
+            <StatSmall label="Conversion" count={leads.filter(l => l.status === 'closed').length} color="green" subtitle="Secured Assets" />
           </div>
 
-          <Card noPadding className="overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between bg-slate-50/50 gap-4">
-                <div className="relative w-full md:w-auto md:min-w-[300px]">
+          <Card noPadding className="overflow-hidden border-slate-200 shadow-sm">
+            <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between bg-slate-50/50 gap-4">
+                <div className="relative w-full md:w-auto md:min-w-[400px]">
                   <Input 
-                    placeholder="Search by name, email, or phone..."
+                    placeholder="Filter by organization, email, or endpoint..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     icon={<Search size={16} />}
                   />
                 </div>
                 <div className="flex items-center gap-3">
-                   {/* Live Indicator */}
-                   <span className="flex items-center text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full border border-green-100">
-                     <span className="relative flex h-2 w-2 mr-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                     </span>
-                     Live Updates
-                   </span>
-                   <Button variant="outline" size="sm" onClick={exportCSV} leftIcon={<Download size={14} />}>Export CSV</Button>
-                   <Button variant="outline" size="sm" onClick={fetchLeads} leftIcon={<RefreshCw size={14} />}>Refresh</Button>
+                   <Button variant="outline" size="sm" onClick={exportCSV} leftIcon={<Download size={14} />}>Export Audit</Button>
+                   <button onClick={fetchLeads} className="p-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all text-slate-400 hover:text-brand-600"><RefreshCw size={16} /></button>
                 </div>
             </div>
             
             {isLoadingLeads ? (
-              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                <p>Loading leads...</p>
+              <div className="flex flex-col items-center justify-center py-32 text-slate-400">
+                <Loader2 className="w-10 h-10 animate-spin mb-4 text-brand-600" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Syncing Lead Database...</p>
               </div>
             ) : filteredLeads.length === 0 ? (
-              <div className="text-center py-20 text-slate-400">
-                <p>No leads found matching your search.</p>
+              <div className="text-center py-32 text-slate-400">
+                <p className="text-sm font-bold uppercase tracking-widest">No matching records found.</p>
               </div>
             ) : (
               <div className="overflow-x-auto min-h-[400px]">
                 <table className="w-full text-left border-collapse">
-                  <thead className="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200">
+                  <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-100">
                     <tr>
-                      <th className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('name')}>
-                        <div className="flex items-center gap-1">Name / Phone <SortIcon field="name" /></div>
+                      <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('name')}>
+                        <div className="flex items-center gap-2">Client / Org <SortIcon field="name" /></div>
                       </th>
-                      <th className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('service')}>
-                        <div className="flex items-center gap-1">Service <SortIcon field="service" /></div>
+                      <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('service')}>
+                        <div className="flex items-center gap-2">Deliverable <SortIcon field="service" /></div>
                       </th>
-                      <th className="px-6 py-4 font-semibold">Details</th>
-                      <th className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('status')}>
-                         <div className="flex items-center gap-1">Status <SortIcon field="status" /></div>
+                      <th className="px-6 py-4">Allocation</th>
+                      <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('status')}>
+                         <div className="flex items-center gap-2">Status <SortIcon field="status" /></div>
                       </th>
-                      <th className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('created_at')}>
-                         <div className="flex items-center gap-1">Date <SortIcon field="created_at" /></div>
-                      </th>
-                      <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                      <th className="px-6 py-4 text-right">Ops</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-50">
                     {filteredLeads.map((lead) => (
                       <React.Fragment key={lead.id}>
                         <tr 
-                          className={`hover:bg-slate-50/80 transition-colors cursor-pointer ${expandedLeadId === lead.id ? 'bg-slate-50' : ''}`}
+                          className={`hover:bg-slate-50/50 transition-colors cursor-pointer group ${expandedLeadId === lead.id ? 'bg-brand-50/30' : ''}`}
                           onClick={() => handleExpandLead(lead)}
                         >
-                          <td className="px-6 py-4">
-                            <div className="font-semibold text-slate-900 flex items-center">
+                          <td className="px-6 py-5">
+                            <div className="font-black text-slate-900 text-sm flex items-center">
                               {lead.name}
-                              {/* Show new indicator if created within last 24h and status is new */}
                               {lead.status === 'new' && (Date.now() - new Date(lead.created_at).getTime() < 86400000) && (
-                                <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full" title="New today"></span>
+                                <span className="ml-2 w-1.5 h-1.5 bg-brand-500 rounded-full animate-pulse"></span>
                               )}
                             </div>
-                            <div className="text-xs text-slate-500 hover:text-brand-600 mb-1">
-                              <a href={`mailto:${lead.email}`} onClick={e => e.stopPropagation()}>{lead.email}</a>
+                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">
+                              {lead.email}
                             </div>
-                            {lead.phone && (
-                               <div className="text-xs text-slate-500 flex items-center">
-                                 <Phone size={10} className="mr-1"/> {lead.phone}
-                               </div>
-                            )}
                           </td>
-                          <td className="px-6 py-4 text-sm text-slate-600 font-medium">{lead.service}</td>
-                          <td className="px-6 py-4 text-xs text-slate-600">
+                          <td className="px-6 py-5">
+                            <span className="text-[10px] font-black uppercase bg-slate-900 text-white px-2 py-1 rounded-md tracking-widest">{lead.service}</span>
+                          </td>
+                          <td className="px-6 py-5">
                             <div className="flex flex-col gap-1">
-                               <Badge variant="neutral">{lead.budget || 'N/A'}</Badge>
-                               <span className="text-slate-400 pl-1">{lead.timeline || 'N/A'}</span>
+                               <span className="text-[11px] font-black text-brand-600 uppercase tracking-tighter">{lead.budget || 'N/A'}</span>
+                               <span className="text-[9px] font-bold text-slate-400 uppercase">{lead.timeline || 'N/A'}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <Badge variant={lead.status === 'new' ? 'info' : lead.status === 'contacted' ? 'warning' : 'success'}>
-                               {(lead.status || 'new').toUpperCase()}
+                          <td className="px-6 py-5">
+                            <Badge variant={lead.status === 'new' ? 'info' : lead.status === 'contacted' ? 'warning' : 'success'} className="uppercase font-black text-[9px] tracking-widest">
+                               {(lead.status || 'new')}
                             </Badge>
                           </td>
-                          <td className="px-6 py-4 text-sm text-slate-500">
-                            {new Date(lead.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button className="text-slate-400 hover:text-slate-600">
+                          <td className="px-6 py-5 text-right">
+                             <button className="p-2 text-slate-300 group-hover:text-brand-600 transition-colors">
                                {expandedLeadId === lead.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                            </button>
+                             </button>
                           </td>
                         </tr>
                         
-                        {/* Expanded Detail View */}
                         {expandedLeadId === lead.id && (
-                          <tr className="bg-slate-50/50">
-                            <td colSpan={6} className="px-6 py-4 border-b border-slate-100 shadow-inner">
-                              <div className="flex flex-col md:flex-row gap-6">
-                                 {/* Message */}
-                                 <div className="flex-1">
-                                   <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Message</h4>
-                                   <div className="bg-white p-3 rounded-lg border border-slate-200 text-sm text-slate-700 italic">
+                          <tr className="bg-white">
+                            <td colSpan={5} className="px-6 py-8 border-b border-slate-100 bg-slate-50/30">
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-5xl">
+                                 <div>
+                                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Target size={14}/> Discovery Brief</h4>
+                                   <div className="bg-white p-6 rounded-2xl border border-slate-200 text-sm text-slate-700 leading-relaxed font-medium shadow-sm">
                                      "{lead.message}"
                                    </div>
                                    
-                                   <div className="mt-4 flex gap-2">
-                                      <Button size="sm" variant={lead.status === 'new' ? 'primary' : 'outline'} onClick={() => updateLeadStatus(lead.id, 'new')}>
-                                        Mark New
-                                      </Button>
-                                      <Button size="sm" variant={lead.status === 'contacted' ? 'primary' : 'outline'} onClick={() => updateLeadStatus(lead.id, 'contacted')}>
-                                        Mark Contacted
-                                      </Button>
-                                      <Button size="sm" variant={lead.status === 'closed' ? 'primary' : 'outline'} onClick={() => updateLeadStatus(lead.id, 'closed')}>
-                                        Mark Closed
-                                      </Button>
+                                   <div className="mt-8 flex gap-3">
+                                      <Button size="sm" variant={lead.status === 'new' ? 'primary' : 'outline'} onClick={() => updateLeadStatus(lead.id, 'new')} className="uppercase font-black text-[10px]">New</Button>
+                                      <Button size="sm" variant={lead.status === 'contacted' ? 'primary' : 'outline'} onClick={() => updateLeadStatus(lead.id, 'contacted')} className="uppercase font-black text-[10px]">Contacted</Button>
+                                      <Button size="sm" variant={lead.status === 'closed' ? 'primary' : 'outline'} onClick={() => updateLeadStatus(lead.id, 'closed')} className="uppercase font-black text-[10px]">Closed</Button>
                                    </div>
                                  </div>
 
-                                 {/* Internal Notes */}
-                                 <div className="flex-1">
-                                   <h4 className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center">
-                                     <FileText size={12} className="mr-1"/> Internal Notes (Admin Only)
-                                   </h4>
-                                   <textarea
-                                     className="w-full h-24 p-3 text-sm rounded-lg border border-slate-300 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white"
-                                     placeholder="Add private notes about this lead (e.g. Call summary)..."
-                                     value={adminNote}
-                                     onChange={(e) => setAdminNote(e.target.value)}
-                                   />
-                                   <div className="flex justify-end mt-2">
-                                     <Button 
-                                       size="sm" 
-                                       onClick={() => saveNote(lead.id)}
-                                       isLoading={isSavingNote}
-                                       leftIcon={<Save size={14}/>}
-                                     >
-                                       Save Note
-                                     </Button>
+                                 <div className="space-y-6">
+                                   <div>
+                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><FileText size={14}/> Internal Ledger Notes</h4>
+                                     <textarea
+                                       className="w-full h-32 p-4 text-sm rounded-2xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 bg-white outline-none font-medium text-slate-600 shadow-sm"
+                                       placeholder="Add private intelligence about this lead..."
+                                       value={adminNote}
+                                       onChange={(e) => setAdminNote(e.target.value)}
+                                     />
+                                     <div className="flex justify-end mt-3">
+                                       <Button size="sm" onClick={() => saveNote(lead.id)} isLoading={isSavingNote} leftIcon={<Save size={14}/>} className="px-6 uppercase font-black text-[10px]">Commit Note</Button>
+                                     </div>
+                                   </div>
+                                   
+                                   <div className="bg-slate-900 p-5 rounded-2xl flex items-center justify-between text-white">
+                                      <div>
+                                         <p className="text-[9px] font-black uppercase text-slate-500 mb-1">Receipt Date</p>
+                                         <p className="text-sm font-black">{new Date(lead.created_at).toLocaleString()}</p>
+                                      </div>
+                                      <div className="text-right">
+                                         <p className="text-[9px] font-black uppercase text-slate-500 mb-1">Lead ID</p>
+                                         <p className="text-xs font-mono opacity-60">{(lead.id || '').slice(0, 8).toUpperCase()}</p>
+                                      </div>
                                    </div>
                                  </div>
                               </div>
@@ -409,37 +377,36 @@ const AdminLeads: React.FC = () => {
           </Card>
         </>
       ) : (
-        /* Subscribers View */
-        <Card noPadding>
-           <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <div className="flex items-center gap-2">
-                 <Mail size={18} className="text-brand-600" />
-                 <h3 className="font-bold text-slate-700">Subscriber List ({subscribers.length})</h3>
+        <Card noPadding className="border-slate-200">
+           <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                 <div className="p-2 bg-brand-600 text-white rounded-lg"><Mail size={18} /></div>
+                 <div>
+                    <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Active Subscribers</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{subscribers.length} Global Nodes</p>
+                 </div>
               </div>
-              <div className="flex gap-2">
-                 <Button variant="outline" size="sm" onClick={exportCSV} leftIcon={<Download size={14} />}>Export CSV</Button>
-                 <Button variant="ghost" size="sm" onClick={fetchSubscribers}><RefreshCw size={14}/></Button>
-              </div>
+              <Button variant="outline" size="sm" onClick={exportCSV} leftIcon={<Download size={14} />}>Export CSV</Button>
            </div>
            
            {loadingSubscribers ? (
-              <div className="flex justify-center py-12"><Loader2 className="animate-spin text-brand-600"/></div>
+              <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-600 w-8 h-8"/></div>
            ) : subscribers.length === 0 ? (
-              <div className="text-center py-12 text-slate-400">No subscribers yet.</div>
+              <div className="text-center py-20 text-slate-400 font-bold uppercase text-[10px] tracking-widest">No active subscribers.</div>
            ) : (
               <div className="overflow-x-auto">
                  <table className="w-full text-left">
-                    <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
+                    <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-100">
                        <tr>
-                          <th className="px-6 py-3">Email Address</th>
-                          <th className="px-6 py-3">Date Subscribed</th>
+                          <th className="px-6 py-4">Endpoint Email</th>
+                          <th className="px-6 py-4">Verification Date</th>
                        </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-50">
                        {subscribers.map(sub => (
-                          <tr key={sub.id} className="hover:bg-slate-50">
-                             <td className="px-6 py-3 text-slate-900 font-medium">{sub.email}</td>
-                             <td className="px-6 py-3 text-slate-500 text-sm">{new Date(sub.created_at).toLocaleDateString()}</td>
+                          <tr key={sub.id} className="hover:bg-slate-50/50 transition-colors">
+                             <td className="px-6 py-4 text-slate-900 font-black text-sm">{sub.email}</td>
+                             <td className="px-6 py-4 text-slate-400 text-xs font-bold">{new Date(sub.created_at).toLocaleDateString()}</td>
                           </tr>
                        ))}
                     </tbody>
@@ -451,5 +418,22 @@ const AdminLeads: React.FC = () => {
     </div>
   );
 };
+
+const StatSmall = ({ label, count, color, subtitle }: { label: string, count: number, color: string, subtitle: string }) => (
+  <Card className={`border-l-4 border-slate-200 relative overflow-hidden flex flex-col justify-between ${
+    color === 'blue' ? 'border-l-brand-500' : 
+    color === 'yellow' ? 'border-l-yellow-400' : 
+    'border-l-green-500'
+  }`}>
+    <div className="flex justify-between items-start">
+      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</p>
+      <Zap size={14} className={`${color === 'blue' ? 'text-brand-400' : color === 'yellow' ? 'text-yellow-400' : 'text-green-400'}`} />
+    </div>
+    <div className="mt-4">
+      <h3 className="text-4xl font-black text-slate-900 leading-none">{count}</h3>
+      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">{subtitle}</p>
+    </div>
+  </Card>
+);
 
 export default AdminLeads;
