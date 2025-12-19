@@ -18,22 +18,39 @@ import ProtectedRoute from './components/ProtectedRoute';
 import NotFound from './pages/NotFound';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
-import { AuthProvider } from './contexts/AuthContext';
+
+// Auth Pages
+import AdminLogin from './pages/AdminLogin';
+import PartnerLogin from './pages/PartnerLogin';
+import PartnerRegister from './pages/PartnerRegister';
+
+// Dashboard Components
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
+const PartnerDashboard = React.lazy(() => import('./components/admin/PartnerDashboard'));
+
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { SiteSettingsProvider } from './contexts/SiteSettingsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import AnalyticsTracker from './components/AnalyticsTracker';
 import LoadingScreen from './components/ui/LoadingScreen';
 
-const AdminLogin = React.lazy(() => import('./pages/AdminLogin'));
-const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
-
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
+};
+
+// Wrapper to pass user to PartnerDashboard
+const PartnerDashboardPage = () => {
+  const { user } = useAuth();
+  return (
+    <div className="pt-24 pb-20 bg-slate-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <PartnerDashboard user={user} />
+      </div>
+    </div>
+  );
 };
 
 const App: React.FC = () => {
@@ -62,13 +79,19 @@ const App: React.FC = () => {
                     <Route path="/track" element={<TrackProject />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />
+                    
+                    {/* Partner Routes */}
+                    <Route path="/partner/login" element={<PartnerLogin />} />
+                    <Route path="/partner/register" element={<PartnerRegister />} />
+                    <Route path="/partner/dashboard" element={
+                      <ProtectedRoute>
+                         <PartnerDashboardPage />
+                      </ProtectedRoute>
+                    } />
                   </Route>
 
-                  <Route path="/admin/login" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <AdminLogin />
-                    </Suspense>
-                  } />
+                  {/* Admin Private Portal */}
+                  <Route path="/admin/login" element={<AdminLogin />} />
                   <Route path="/admin/dashboard" element={
                     <Suspense fallback={<LoadingScreen />}>
                       <ProtectedRoute>

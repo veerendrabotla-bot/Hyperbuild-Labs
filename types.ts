@@ -30,21 +30,22 @@ export interface Project {
   challenge?: string;
   solution?: string;
   results?: string[];
-  // Delivery & Tracking Fields
   status: 'planning' | 'development' | 'review' | 'completed';
-  is_portfolio: boolean; // TRUE: Shown on public website list.
-  is_active: boolean;    // MASTER KILL SWITCH: Hide from portal AND public list if FALSE.
+  is_portfolio: boolean;
+  is_active: boolean;
   repo_link?: string;
   documentation_link?: string;
   live_link?: string;
   created_at?: string;
   
-  // Enterprise Financials
+  // Financials & Referrals
   total_amount: number;
   paid_amount: number;
   currency: 'USD' | 'INR';
+  commission_amount: number;
+  employee_id?: string; // Links to the partner who referred it
   
-  // Visibility Toggles (Feature Flags)
+  // Visibility
   show_repo: boolean;
   show_docs: boolean;
   show_live: boolean;
@@ -52,51 +53,11 @@ export interface Project {
   show_lifecycle: boolean;
 }
 
-export interface PricingTier {
-  id?: string;
-  name: string;
-  price: string;
-  currency: 'USD' | 'INR';
-  description: string;
-  features: string[];
-  recommended?: boolean;
-  is_recommended?: boolean;
-  order_index?: number;
-}
-
-export interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  company: string;
-  content: string;
-  avatar: string;
-  companyLogo?: string;
-}
-
-export interface FaqItem {
-  id?: string;
-  question: string;
-  answer: string;
-  order_index?: number;
-}
-
-export interface BlogPost {
-  id: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  author: string;
-  date: string;
-  readTime: string;
-  category: string;
-  image: string;
-  tags: string[];
-}
-
 export interface AdminUser {
   id: string;
   email: string;
+  role: 'admin' | 'employee';
+  is_approved: boolean;
 }
 
 export interface Lead {
@@ -111,6 +72,7 @@ export interface Lead {
   status: 'new' | 'contacted' | 'closed';
   admin_notes?: string;
   created_at: string;
+  employee_id?: string; // Tracks which partner referred the lead
 }
 
 export interface Appointment {
@@ -157,7 +119,8 @@ export interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'editor' | 'viewer';
+  role: 'admin' | 'employee';
+  is_approved: boolean;
   avatar?: string;
   created_at: string;
 }
@@ -166,4 +129,52 @@ export interface SiteSetting {
   key: string;
   value: string;
   description?: string;
+}
+
+/* FIX: Added missing PricingTier interface */
+export interface PricingTier {
+  id?: string;
+  name: string;
+  price: string;
+  currency: 'USD' | 'INR';
+  description: string;
+  features: string[];
+  recommended?: boolean;
+  is_recommended?: boolean;
+  order_index?: number;
+}
+
+/* FIX: Added missing Testimonial interface */
+export interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  content: string;
+  avatar: string;
+  created_at?: string;
+}
+
+/* FIX: Added missing FaqItem interface */
+export interface FaqItem {
+  id?: string;
+  question: string;
+  answer: string;
+  order_index?: number;
+}
+
+/* FIX: Added missing BlogPost interface */
+export interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  author: string;
+  date: string;
+  readTime: string;
+  image: string;
+  tags: string[];
+  content: string;
+  created_at?: string;
+  read_time?: string;
 }

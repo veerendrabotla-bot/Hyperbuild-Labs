@@ -110,6 +110,8 @@ export const PORTFOLIO: Project[] = [
     paid_amount: 15000,
     // Fixed: Added missing required currency property
     currency: 'USD',
+    /* FIX: Added missing commission_amount */
+    commission_amount: 1500,
     show_repo: false,
     show_docs: true,
     show_live: true,
@@ -144,6 +146,8 @@ export const PORTFOLIO: Project[] = [
     paid_amount: 8500,
     // Fixed: Added missing required currency property
     currency: 'USD',
+    /* FIX: Added missing commission_amount */
+    commission_amount: 850,
     show_repo: false,
     show_docs: false,
     show_live: true,
@@ -178,6 +182,8 @@ export const PORTFOLIO: Project[] = [
     paid_amount: 4500,
     // Fixed: Added missing required currency property
     currency: 'USD',
+    /* FIX: Added missing commission_amount */
+    commission_amount: 450,
     show_repo: true,
     show_docs: true,
     show_live: false,
@@ -212,6 +218,8 @@ export const PORTFOLIO: Project[] = [
     paid_amount: 12000,
     // Fixed: Added missing required currency property
     currency: 'USD',
+    /* FIX: Added missing commission_amount */
+    commission_amount: 1200,
     show_repo: false,
     show_docs: true,
     show_live: true,
