@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Rocket, Search } from 'lucide-react';
+import { Menu, X, Rocket, Search, Radar } from 'lucide-react';
 import { COMPANY_NAME, WHATSAPP_LINK } from '../constants';
 import Button from './Button';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
@@ -20,7 +21,6 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsOpen(false);
   }, [location]);
@@ -34,46 +34,41 @@ const Navbar: React.FC = () => {
     { name: 'Services', path: '/services' },
     { name: 'Portfolio', path: '/portfolio' },
     { name: 'Demo', path: '/demo' },
-    { name: 'Pricing', path: '/pricing' },
     { name: 'Insights', path: '/blog' },
-    { name: 'About', path: '/about' },
+    { name: 'Pricing', path: '/pricing' },
   ];
 
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${
       scrolled ? 'bg-white/95 backdrop-blur-md shadow-md py-3' : 'bg-transparent py-5'
-    }`} role="navigation" aria-label="Main navigation">
+    }`} role="navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-12">
           {/* Logo */}
           <div 
             className="flex-shrink-0 flex items-center cursor-pointer" 
             onClick={() => navigate('/')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && navigate('/')}
-            aria-label={`${settings.company_name || COMPANY_NAME} Home`}
           >
             {settings.logo_url ? (
               <img src={settings.logo_url} alt="Logo" className="h-8 w-auto mr-2 object-contain" />
             ) : (
               <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center mr-2">
-                <Rocket className="text-white w-5 h-5" aria-hidden="true" />
+                <Rocket className="text-white w-5 h-5" />
               </div>
             )}
-            <span className={`font-bold text-xl tracking-tight ${scrolled ? 'text-slate-900' : 'text-slate-900 lg:text-slate-900'}`}>
+            <span className={`font-bold text-xl tracking-tight text-slate-900`}>
               {settings.company_name || COMPANY_NAME}
             </span>
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex space-x-6 items-center">
+          <div className="hidden lg:flex space-x-6 items-center">
             {navLinks.map((link) => (
               <NavLink
                 key={link.name}
                 to={link.path}
                 className={({ isActive }) => `
-                  text-sm font-medium transition-colors hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 rounded-md px-2 py-1
+                  text-sm font-medium transition-colors hover:text-brand-600 px-2 py-1
                   ${isActive ? 'text-brand-600' : 'text-slate-600'}
                 `}
               >
@@ -81,6 +76,10 @@ const Navbar: React.FC = () => {
               </NavLink>
             ))}
             
+            <NavLink to="/track" className="flex items-center text-sm font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-full hover:bg-brand-100 transition-colors">
+              <Radar size={16} className="mr-1.5" /> Track Project
+            </NavLink>
+
             <button 
               onClick={triggerSearch} 
               className="text-slate-500 hover:text-brand-600 p-2 rounded-full hover:bg-slate-100 transition-colors"
@@ -93,59 +92,29 @@ const Navbar: React.FC = () => {
               size="sm" 
               onClick={() => navigate('/contact')}
               className="ml-2"
-              aria-label="Book a consultation"
             >
-              Book Consultation
+              Get Free Quote
             </Button>
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center gap-4">
-            <button 
-              onClick={triggerSearch} 
-              className="text-slate-600 hover:text-slate-900"
-              aria-label="Search"
-            >
-              <Search size={22} />
-            </button>
-            
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 rounded-md p-1"
-              aria-label="Toggle navigation menu"
-              aria-expanded={isOpen}
-            >
-              {isOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
-            </button>
+          <div className="lg:hidden flex items-center gap-4">
+            <button onClick={triggerSearch} className="text-slate-600"><Search size={22} /></button>
+            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600">{isOpen ? <X size={24} /> : <Menu size={24} />}</button>
           </div>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-white shadow-xl absolute top-full left-0 w-full border-t border-slate-100">
+        <div className="lg:hidden bg-white shadow-xl absolute top-full left-0 w-full border-t">
           <div className="px-4 pt-2 pb-6 space-y-1 flex flex-col">
             {navLinks.map((link) => (
-              <NavLink
-                key={link.name}
-                to={link.path}
-                className={({ isActive }) => `
-                  block px-3 py-3 rounded-md text-base font-medium
-                  ${isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-50'}
-                `}
-              >
-                {link.name}
-              </NavLink>
+              <NavLink key={link.name} to={link.path} className="block px-3 py-3 rounded-md text-base font-medium text-slate-700 hover:bg-slate-50">{link.name}</NavLink>
             ))}
+            <NavLink to="/track" className="flex items-center px-3 py-3 text-brand-600 font-bold"><Radar size={18} className="mr-2"/> Track Project</NavLink>
             <div className="pt-4 px-3 flex flex-col gap-3">
-               <Button onClick={() => navigate('/contact')} className="w-full justify-center">
-                 Book Consultation
-               </Button>
-               <a href={settings.whatsapp_link || WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="w-full" aria-label="Chat with us on WhatsApp">
-                <button className="w-full justify-center border border-green-500 text-green-600 hover:bg-green-50 font-medium py-2 rounded-lg transition-colors">
-                  WhatsApp Us
-                </button>
-               </a>
+               <Button onClick={() => navigate('/contact')} className="w-full">Get Free Quote</Button>
             </div>
           </div>
         </div>

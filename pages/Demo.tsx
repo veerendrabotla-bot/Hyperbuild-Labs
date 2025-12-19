@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import SectionHeading from '../components/SectionHeading';
-import { Bot, Send, User, RefreshCw, Sparkles } from 'lucide-react';
+import { Bot, Send, User, RefreshCw, Sparkles, MessageSquare } from 'lucide-react';
 import SEO from '../components/SEO';
 import { GoogleGenAI } from "@google/genai";
 import { PRICING, SERVICES } from '../constants';
@@ -14,13 +15,12 @@ interface Message {
 
 const Demo: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
-    { id: 1, text: "Hi there! I'm the HyperBuild AI Sales Agent. I can calculate quotes, explain our tech stack, or schedule a meeting. How can I help?", sender: 'ai' }
+    { id: 1, text: "Welcome to HyperBuild Labs. I'm your AI Solutions Architect. I can explain our custom automation workflows, calculate pricing for your specific needs, or help you book a strategy call. What are you building today?", sender: 'ai' }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Store fetched data for AI Context
   const [dynamicContext, setDynamicContext] = useState({ services: SERVICES, pricing: PRICING });
 
   const scrollToBottom = () => {
@@ -31,7 +31,6 @@ const Demo: React.FC = () => {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  // Fetch real data on load to train AI
   useEffect(() => {
     const fetchContextData = async () => {
       try {
@@ -62,48 +61,38 @@ const Demo: React.FC = () => {
     setIsTyping(true);
 
     try {
-      // Initialize Gemini Client
-      // The API key must be obtained exclusively from process.env.API_KEY and used directly.
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      // Construct context about the agency
       const agencyContext = `
-        You are a helpful, professional, and persuasive Sales Representative for 'HyperBuild Labs', an AI & Web Development Agency.
+        You are 'Architect', an expert AI & Web Solutions consultant for 'HyperBuild Labs'.
         
-        YOUR GOAL: Answer questions, explain services, and encourage the user to 'Book a Consultation'.
+        YOUR MISSION:
+        1. Convert the user by explaining how our technical expertise (AI, Automation, Web) solves their specific business problems.
+        2. Reference specific services: ${dynamicContext.services.map(s => s.title).join(', ')}.
+        3. Reference pricing when asked: ${dynamicContext.pricing.map(p => `${p.name}: ${p.price}`).join(', ')}.
+        4. Be extremely professional, concise, and technically knowledgeable. Avoid fluff.
+        5. If the user seems interested, suggest they 'Book a Discovery Call' via the button at the top of the Contact page.
         
-        AGENCY DETAILS:
-        - Name: HyperBuild Labs
-        - Focus: Enterprise-grade websites, AI Agents, CRM Automation.
-        - Tone: Professional, Tech-savvy, Confident.
-        
-        SERVICES & PRICING CONTEXT (Real Database Data):
-        ${JSON.stringify(dynamicContext.services)}
-        ${JSON.stringify(dynamicContext.pricing)}
-        
-        RULES:
-        1. Keep responses concise (under 50 words usually).
-        2. If asked about price, mention the specific prices from the context provided above.
-        3. Always be polite.
-        4. If you don't know something, suggest booking a consultation.
+        TONE:
+        Direct, high-agency, and enterprise-grade.
       `;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: userText,
         config: {
           systemInstruction: agencyContext,
+          temperature: 0.7,
         },
       });
 
-      const aiResponseText = response.text || "I'm having trouble connecting to the server right now. Please try again or book a consultation!";
+      const aiResponseText = response.text || "I'm currently optimizing my internal neural networks. Please reach out via our contact form for an immediate response!";
 
       setMessages(prev => [...prev, { id: Date.now() + 1, text: aiResponseText, sender: 'ai' }]);
     } catch (error) {
       console.error("AI Error:", error);
-      // Fallback simulation if API fails or key is missing
       setTimeout(() => {
-        const fallbackResponse = "I'm currently experiencing high traffic (Demo Mode Limit). However, our team would love to chat! Please head to the Contact page.";
+        const fallbackResponse = "I'm experiencing a high volume of inquiries. For enterprise-grade support, please use our contact form or book a call directly through our scheduler.";
         setMessages(prev => [...prev, { id: Date.now() + 1, text: fallbackResponse, sender: 'ai' }]);
       }, 1000);
     } finally {
@@ -114,114 +103,118 @@ const Demo: React.FC = () => {
   return (
     <div className="pt-24 pb-20 bg-slate-50 min-h-screen">
       <SEO 
-        title="Interactive AI Demos" 
-        description="Interact with our AI Chatbot demo and see how our automation tools can enhance your customer support and lead generation in real-time." 
+        title="AI Solutions Architect Demo" 
+        description="Interact with our intelligent solutions architect to explore how HyperBuild Labs can automate your revenue and scale your infrastructure." 
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeading 
-          title="Live AI Agent Demo" 
-          subtitle="This isn't a script. This is a real AI agent trained on our agency's data. Try asking it about pricing or our tech stack."
-        />
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center px-3 py-1 mb-4 rounded-full bg-brand-100 text-brand-700 text-xs font-bold uppercase tracking-wider">
+            Live Cognitive Demo
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">Talk to Our Solutions Architect</h1>
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+            Experience our proprietary RAG-trained AI agent. It knows our tech stack, our pricing, and how to build your next big thing.
+          </p>
+        </div>
 
-        <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
-          {/* Chat Header */}
-          <div className="bg-brand-600 p-4 flex items-center justify-between text-white">
-            <div className="flex items-center">
-              <div className="bg-white/20 p-2 rounded-full mr-3 relative">
-                <Bot size={24} aria-hidden="true" />
-                <div className="absolute -top-1 -right-1 bg-yellow-400 rounded-full p-0.5">
-                  <Sparkles size={8} className="text-brand-900" aria-hidden="true" />
-                </div>
-              </div>
-              <div>
-                <h3 className="font-bold">HyperBuild Assistant (Live)</h3>
-                <p className="text-xs text-brand-100 flex items-center">
-                  <span className="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse" aria-hidden="true"></span> Powered by Gemini 2.5
-                </p>
-              </div>
+        <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col md:flex-row h-[600px]">
+          {/* Sidebar / Info */}
+          <div className="w-full md:w-64 bg-slate-900 p-6 text-white hidden md:flex flex-col">
+            <div className="flex-1">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Capabilities</h4>
+              <ul className="space-y-4 text-sm">
+                <li className="flex items-start gap-3 text-slate-300">
+                  <div className="w-1.5 h-1.5 bg-brand-500 rounded-full mt-1.5"></div>
+                  Budget Estimation
+                </li>
+                <li className="flex items-start gap-3 text-slate-300">
+                  <div className="w-1.5 h-1.5 bg-brand-500 rounded-full mt-1.5"></div>
+                  Stack Consultation
+                </li>
+                <li className="flex items-start gap-3 text-slate-300">
+                  <div className="w-1.5 h-1.5 bg-brand-500 rounded-full mt-1.5"></div>
+                  Project Scoping
+                </li>
+              </ul>
             </div>
-            <button 
-              onClick={() => setMessages([{ id: 1, text: "Hi there! I'm the HyperBuild AI Sales Agent. I can calculate quotes, explain our tech stack, or schedule a meeting. How can I help?", sender: 'ai' }])} 
-              className="text-brand-100 hover:text-white transition-colors p-1 rounded hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-white"
-              aria-label="Restart conversation"
-            >
-              <RefreshCw size={18} />
-            </button>
+            <div className="pt-6 border-t border-slate-800">
+              <p className="text-[10px] text-slate-500 leading-relaxed uppercase font-bold">Model: Gemini 3 Flash</p>
+              <p className="text-[10px] text-slate-500 leading-relaxed uppercase font-bold">Role: Lead Architect</p>
+            </div>
           </div>
 
-          {/* Chat Window */}
-          <div className="h-96 overflow-y-auto p-6 bg-slate-50 space-y-4" role="log" aria-live="polite" aria-relevant="additions">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`flex max-w-[85%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${msg.sender === 'user' ? 'bg-secondary-800 ml-2' : 'bg-brand-600 mr-2'}`} aria-hidden="true">
-                    {msg.sender === 'user' ? <User size={14} className="text-white" /> : <Bot size={14} className="text-white" />}
-                  </div>
-                  <div className={`p-3.5 rounded-2xl text-sm leading-relaxed ${
-                    msg.sender === 'user' 
-                      ? 'bg-secondary-800 text-white rounded-tr-none' 
-                      : 'bg-white text-slate-700 shadow-sm border border-slate-200 rounded-tl-none'
-                  }`}>
-                    {msg.text}
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col bg-white">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <Bot size={18} className="text-brand-600" />
+                <span className="font-bold text-slate-700">Architect v4.0</span>
+              </div>
+              <button 
+                onClick={() => setMessages([{ id: 1, text: "Welcome to HyperBuild Labs. I'm your AI Solutions Architect. What are you building today?", sender: 'ai' }])}
+                className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-400 transition-colors"
+              >
+                <RefreshCw size={16} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar" role="log">
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`flex max-w-[85%] ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'} items-end gap-3`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.sender === 'user' ? 'bg-secondary-800' : 'bg-brand-600 shadow-lg shadow-brand-500/20'}`}>
+                      {msg.sender === 'user' ? <User size={14} className="text-white" /> : <Bot size={14} className="text-white" />}
+                    </div>
+                    <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
+                      msg.sender === 'user' 
+                        ? 'bg-secondary-900 text-white rounded-br-none shadow-md' 
+                        : 'bg-white text-slate-700 shadow-sm border border-slate-100 rounded-bl-none'
+                    }`}>
+                      {msg.text}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            {isTyping && (
-               <div className="flex justify-start" aria-label="AI is typing">
-                 <div className="flex flex-row">
-                   <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center flex-shrink-0 mt-1 mr-2" aria-hidden="true">
-                     <Bot size={14} className="text-white" />
-                   </div>
-                   <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-200 flex items-center">
-                     <div className="flex space-x-1.5">
-                       <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce"></div>
-                       <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce delay-100"></div>
-                       <div className="w-2 h-2 bg-brand-400 rounded-full animate-bounce delay-200"></div>
+              ))}
+              {isTyping && (
+                 <div className="flex justify-start">
+                   <div className="flex flex-row items-end gap-3">
+                     <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center flex-shrink-0">
+                       <Bot size={14} className="text-white" />
+                     </div>
+                     <div className="bg-white p-4 rounded-2xl rounded-bl-none shadow-sm border border-slate-100 flex items-center">
+                       <div className="flex space-x-1.5">
+                         <div className="w-1.5 h-1.5 bg-brand-400 rounded-full animate-bounce"></div>
+                         <div className="w-1.5 h-1.5 bg-brand-400 rounded-full animate-bounce delay-100"></div>
+                         <div className="w-1.5 h-1.5 bg-brand-400 rounded-full animate-bounce delay-200"></div>
+                       </div>
                      </div>
                    </div>
                  </div>
-               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Area */}
-          <div className="p-4 bg-white border-t border-slate-200">
-            <div className="flex items-center space-x-2">
-              <input 
-                type="text" 
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask about pricing, AI services, or custom dev..."
-                aria-label="Type your message to the AI assistant"
-                className="flex-1 border border-slate-300 rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm"
-              />
-              <button 
-                onClick={handleSend}
-                disabled={!inputValue.trim() || isTyping}
-                aria-label="Send message"
-                className="bg-brand-600 text-white p-3 rounded-full hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
-              >
-                <Send size={18} aria-hidden="true" />
-              </button>
+              )}
+              <div ref={messagesEndRef} />
             </div>
-            <p className="text-center text-[10px] text-slate-400 mt-2">
-              AI can make mistakes. Please verify pricing with our team.
-            </p>
-          </div>
-        </div>
 
-        <div className="mt-12 text-center bg-brand-50 p-8 rounded-xl border border-brand-100 max-w-3xl mx-auto">
-          <h4 className="font-bold text-slate-900 mb-2">Impressive, right?</h4>
-          <p className="text-slate-600 mb-6 text-sm">
-            We can build a custom agent like this for your business—trained on your PDF data, customer support logs, and pricing sheets.
-          </p>
-          <button className="bg-brand-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-brand-700 transition-colors" onClick={() => window.location.hash = '#contact'}>
-            Build My AI Agent
-          </button>
+            <div className="p-4 border-t border-slate-100">
+              <div className="relative flex items-center">
+                <input 
+                  type="text" 
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                  placeholder="Ask about pricing or stack..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                />
+                <button 
+                  onClick={handleSend}
+                  disabled={!inputValue.trim() || isTyping}
+                  className="absolute right-2 p-2 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-all shadow-md shadow-brand-500/20"
+                >
+                  <Send size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

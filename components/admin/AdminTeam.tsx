@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { TeamMember } from '../../types';
@@ -186,7 +187,7 @@ const AdminTeam: React.FC = () => {
                    </td>
                    <td className="px-6 py-4">
                      <Badge variant={member.role === 'admin' ? 'info' : member.role === 'editor' ? 'warning' : 'neutral'}>
-                       {member.role.toUpperCase()}
+                       {(member.role || 'viewer').toUpperCase()}
                      </Badge>
                    </td>
                    <td className="px-6 py-4 text-sm text-slate-500">

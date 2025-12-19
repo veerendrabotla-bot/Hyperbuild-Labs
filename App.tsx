@@ -1,3 +1,4 @@
+
 import React, { useEffect, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -11,6 +12,7 @@ import Demo from './pages/Demo';
 import ProjectDetails from './pages/ProjectDetails';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
+import TrackProject from './pages/TrackProject';
 import SearchOverlay from './components/SearchOverlay';
 import ProtectedRoute from './components/ProtectedRoute';
 import NotFound from './pages/NotFound';
@@ -23,11 +25,9 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AnalyticsTracker from './components/AnalyticsTracker';
 import LoadingScreen from './components/ui/LoadingScreen';
 
-// Lazy Load Admin Components to split bundle size
 const AdminLogin = React.lazy(() => import('./pages/AdminLogin'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 
-// Scroll to top wrapper
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -48,7 +48,6 @@ const App: React.FC = () => {
               <div className="flex flex-col min-h-screen">
                 <SearchOverlay />
                 <Routes>
-                  {/* Public Routes wrapped in Layout */}
                   <Route element={<Layout />}>
                     <Route path="/" element={<Home />} />
                     <Route path="/services" element={<Services />} />
@@ -60,11 +59,11 @@ const App: React.FC = () => {
                     <Route path="/demo" element={<Demo />} />
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/blog/:id" element={<BlogPost />} />
+                    <Route path="/track" element={<TrackProject />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />
                   </Route>
 
-                  {/* Admin Routes (Standalone & Lazy Loaded) */}
                   <Route path="/admin/login" element={
                     <Suspense fallback={<LoadingScreen />}>
                       <AdminLogin />
@@ -78,7 +77,6 @@ const App: React.FC = () => {
                     </Suspense>
                   } />
 
-                  {/* 404 Route */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>

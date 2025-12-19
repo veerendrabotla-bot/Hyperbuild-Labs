@@ -1,3 +1,4 @@
+
 import { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
@@ -9,8 +10,8 @@ export interface Service {
   id: string;
   title: string;
   description: string;
-  icon?: LucideIcon; // Optional for static fallback
-  icon_name?: string; // For DB storage
+  icon?: LucideIcon;
+  icon_name?: string;
   features: string[];
   category: 'AI' | 'Web' | 'Automation' | 'Branding';
 }
@@ -23,22 +24,29 @@ export interface Project {
   description: string;
   impact: string;
   techStack: string[];
-  // New fields for Case Study page
   client?: string;
+  client_email?: string;
   duration?: string;
   challenge?: string;
   solution?: string;
   results?: string[];
+  // Delivery & Tracking Fields
+  status: 'planning' | 'development' | 'review' | 'completed';
+  is_portfolio: boolean; // TRUE: Shown on website. FALSE: Private tracking only.
+  repo_link?: string;
+  documentation_link?: string;
+  live_link?: string;
+  created_at?: string;
 }
 
 export interface PricingTier {
-  id?: string; // Optional for static fallback
+  id?: string;
   name: string;
   price: string;
   description: string;
   features: string[];
   recommended?: boolean;
-  is_recommended?: boolean; // DB field mapping
+  is_recommended?: boolean;
   order_index?: number;
 }
 
@@ -53,7 +61,7 @@ export interface Testimonial {
 }
 
 export interface FaqItem {
-  id?: string; // Optional for static fallback
+  id?: string;
   question: string;
   answer: string;
   order_index?: number;
@@ -81,7 +89,7 @@ export interface Lead {
   id: string;
   name: string;
   email: string;
-  phone?: string; // New Field
+  phone?: string;
   service: string;
   budget?: string;
   timeline?: string;
@@ -95,7 +103,7 @@ export interface Appointment {
   id: string;
   name: string;
   email: string;
-  date: string; // ISO String
+  date: string;
   notes?: string;
   status: 'confirmed' | 'cancelled' | 'completed';
   created_at: string;
@@ -108,8 +116,6 @@ export interface SearchResult {
   description: string;
   link: string;
 }
-
-// -- OPERATIONS TYPES --
 
 export interface Task {
   id: string;

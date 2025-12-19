@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Lead } from '../../types';
@@ -140,7 +141,7 @@ const AdminLeads: React.FC = () => {
               `"${lead.service}"`,
               `"${lead.budget || ''}"`,
               `"${lead.timeline || ''}"`,
-              `"${lead.status}"`,
+              `"${lead.status || 'new'}"`,
               `"${new Date(lead.created_at).toLocaleDateString()}"`,
               `"${(lead.message || '').replace(/"/g, '""')}"`,
               `"${(lead.admin_notes || '').replace(/"/g, '""')}"`
@@ -335,7 +336,7 @@ const AdminLeads: React.FC = () => {
                           </td>
                           <td className="px-6 py-4">
                             <Badge variant={lead.status === 'new' ? 'info' : lead.status === 'contacted' ? 'warning' : 'success'}>
-                               {lead.status.toUpperCase()}
+                               {(lead.status || 'new').toUpperCase()}
                             </Badge>
                           </td>
                           <td className="px-6 py-4 text-sm text-slate-500">

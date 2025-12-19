@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Invoice } from '../../types';
@@ -69,7 +70,7 @@ const AdminInvoices: React.FC = () => {
         to_name: invoice.client_name,
         to_email: invoice.client_email,
         amount: `$${invoice.amount.toLocaleString()}`,
-        status: invoice.status.toUpperCase(),
+        status: (invoice.status || 'draft').toUpperCase(),
         due_date: invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'Upon Receipt',
         invoice_link: `${window.location.origin}/#/invoices/${invoice.id}` // Hypothetical public link
       });
@@ -197,7 +198,7 @@ const AdminInvoices: React.FC = () => {
                   <td className="px-6 py-4 text-slate-600 font-mono">${Number(inv.amount).toLocaleString()}</td>
                   <td className="px-6 py-4">
                     <Badge variant={inv.status === 'paid' ? 'success' : inv.status === 'overdue' ? 'danger' : inv.status === 'sent' ? 'warning' : 'neutral'}>
-                      {inv.status.toUpperCase()}
+                      {(inv.status || 'draft').toUpperCase()}
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500">{new Date(inv.created_at).toLocaleDateString()}</td>

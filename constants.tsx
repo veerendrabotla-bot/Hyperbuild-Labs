@@ -1,3 +1,4 @@
+
 import { 
   Bot, 
   Globe, 
@@ -93,6 +94,10 @@ export const PORTFOLIO: Project[] = [
     duration: '3 Months',
     challenge: 'FinFlow needed a way to visualize complex financial data for non-technical startup founders. Their existing excel-based reporting was causing high churn rates as users found it too difficult to understand their cash runway.',
     solution: 'We built a modern React dashboard integrated with a Python-based predictive AI model. The system automatically categorizes transactions and projects future cash flow scenarios.',
+    // Set mandatory status property for portfolio projects
+    status: 'completed',
+    // Added mandatory is_portfolio property for public listing
+    is_portfolio: true,
     results: [
       '40% increase in user retention within 3 months.',
       'Reduced data processing time by 95%.',
@@ -111,6 +116,10 @@ export const PORTFOLIO: Project[] = [
     duration: '2 Months',
     challenge: 'High cart abandonment rates on mobile devices and a lack of trust in product quality from online visitors were stifling growth.',
     solution: 'We developed a headless Shopify store with a focus on mobile-first speed. We integrated a Three.js AR viewer allowing customers to see products in 3D space.',
+    // Set mandatory status property for portfolio projects
+    status: 'completed',
+    // Added mandatory is_portfolio property for public listing
+    is_portfolio: true,
     results: [
       'Conversion rate jumped from 1.2% to 3.1%.',
       'Mobile load time decreased from 4.5s to 0.9s.',
@@ -129,6 +138,10 @@ export const PORTFOLIO: Project[] = [
     duration: '4 Weeks',
     challenge: 'The sales team was spending 60% of their day responding to unqualified leads on WhatsApp, leading to burnout and missed high-value opportunities.',
     solution: 'We built a custom AI agent using OpenAI API connected to Twilio. The bot engages incoming leads, asks qualifying questions, and only forwards "Hot" leads to the HubSpot CRM.',
+    // Set mandatory status property for portfolio projects
+    status: 'completed',
+    // Added mandatory is_portfolio property for public listing
+    is_portfolio: true,
     results: [
       'Sales team saved 20 hours per week per rep.',
       'Response time dropped from 2 hours to 5 seconds.',
@@ -147,6 +160,10 @@ export const PORTFOLIO: Project[] = [
     duration: '4 Months',
     challenge: 'A legacy website with poor SEO and broken search filters was causing Urban Realty to lose market share to tech-savvy competitors.',
     solution: 'We executed a complete rebrand and built a blazing fast Next.js property portal. We implemented advanced map search and automated email alerts for new listings.',
+    // Set mandatory status property for portfolio projects
+    status: 'completed',
+    // Added mandatory is_portfolio property for public listing
+    is_portfolio: true,
     results: [
       'Organic traffic increased by 200% in 6 months.',
       'Property inquiries rose by 150%.',

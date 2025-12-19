@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import SectionHeading from '../components/SectionHeading';
 import Button from '../components/Button';
-import { Mail, Phone, MapPin, MessageCircle, Calendar, AlertCircle, ChevronDown, CheckCircle2 } from 'lucide-react';
-import { FAQS, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_AUTO_REPLY_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../constants';
+import { Mail, Phone, MapPin, Calendar, CheckCircle2, ChevronDown, DollarSign, IndianRupee } from 'lucide-react';
+import { FAQS, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../constants';
 import SEO from '../components/SEO';
 import { supabase } from '../lib/supabaseClient';
 import emailjs from '@emailjs/browser';
@@ -10,20 +11,15 @@ import BookingSystem from '../components/BookingSystem';
 import { useToast } from '../contexts/ToastContext';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { FaqItem } from '../types';
+import Card from '../components/ui/Card';
+import Input from '../components/ui/Input';
 
 interface FormErrors {
   name?: string;
   email?: string;
   phone?: string;
   message?: string;
-  general?: string;
-}
-
-interface FormTouched {
-  name: boolean;
-  email: boolean;
-  phone: boolean;
-  message: boolean;
+  customBudget?: string;
 }
 
 const Contact: React.FC = () => {
@@ -35,17 +31,16 @@ const Contact: React.FC = () => {
     email: '',
     phone: '',
     service: 'Web Development',
-    budget: '$5k - $10k',
+    budget: '$5k - $10k (₹4L - ₹8L)',
     timeline: 'Within 1 month',
     message: ''
   });
+
+  const [isCustomBudget, setIsCustomBudget] = useState(false);
+  const [customBudgetAmount, setCustomBudgetAmount] = useState('');
+  const [currency, setCurrency] = useState<'USD' | 'INR'>('USD');
+  
   const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<FormTouched>({
-    name: false,
-    email: false,
-    phone: false,
-    message: false
-  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
@@ -61,451 +56,206 @@ const Contact: React.FC = () => {
   const fetchFaqs = async () => {
     try {
       const { data, error } = await supabase.from('faqs').select('*').order('order_index', { ascending: true });
-      
-      if (error) {
-        if (error.code === 'PGRST205') {
-           console.warn("FAQs table not found in Supabase. Using static fallback data.");
-        } else {
-           console.error("Error fetching FAQs:", error);
-        }
-        setFaqs(FAQS); // Fallback to constants
-      } else if (!data || data.length === 0) {
-        setFaqs(FAQS);
-      } else {
-        setFaqs(data as FaqItem[]);
-      }
-    } catch (err) {
-      setFaqs(FAQS);
+      if (!error && data) setFaqs(data as FaqItem[]);
+      else setFaqs(FAQS);
+    } catch (err) { setFaqs(FAQS); }
+  };
+
+  const validate = () => {
+    const newErrors: FormErrors = {};
+    if (!formData.name) newErrors.name = 'Required';
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email';
+    if (!formData.message) newErrors.message = 'Required';
+    if (isCustomBudget && (!customBudgetAmount || isNaN(Number(customBudgetAmount)))) {
+      newErrors.customBudget = 'Enter a valid amount';
     }
-  };
-
-  const toggleFaq = (index: number) => {
-    setOpenFaqIndex(openFaqIndex === index ? null : index);
-  };
-
-  const validateField = (name: string, value: string): string | undefined => {
-    switch (name) {
-      case 'name':
-        if (!value.trim()) return 'Name is required';
-        if (value.trim().length < 2) return 'Name must be at least 2 characters';
-        return undefined;
-      case 'email':
-        if (!value.trim()) return 'Email is required';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
-        return undefined;
-      case 'phone':
-        if (value.trim() && !/^\+?[\d\s-]{10,}$/.test(value.trim())) return 'Please enter a valid phone number';
-        return undefined;
-      case 'message':
-        if (!value.trim()) return 'Message is required';
-        if (value.trim().length < 10) return 'Message must be at least 10 characters';
-        return undefined;
-      default:
-        return undefined;
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    if (touched[name as keyof FormTouched]) {
-      const error = validateField(name, value);
-      setErrors(prev => ({
-        ...prev,
-        [name]: error
-      }));
-    }
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setTouched(prev => ({
-      ...prev,
-      [name]: true
-    }));
-    
-    const error = validateField(name, value);
-    setErrors(prev => ({
-      ...prev,
-      [name]: error
-    }));
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
+
+    setIsSubmitting(true);
     
-    const nameError = validateField('name', formData.name);
-    const emailError = validateField('email', formData.email);
-    const phoneError = validateField('phone', formData.phone);
-    const messageError = validateField('message', formData.message);
+    const finalBudget = isCustomBudget 
+      ? `${currency === 'USD' ? '$' : '₹'}${customBudgetAmount} (Custom)` 
+      : formData.budget;
 
-    setErrors({
-      name: nameError,
-      email: emailError,
-      phone: phoneError,
-      message: messageError
-    });
+    const submissionData = {
+      ...formData,
+      budget: finalBudget
+    };
 
-    setTouched({
-      name: true,
-      email: true,
-      phone: true,
-      message: true
-    });
+    try {
+      const { error } = await supabase.from('leads').insert([submissionData]);
+      if (error) throw error;
 
-    if (!nameError && !emailError && !messageError && !phoneError) {
-      setIsSubmitting(true);
-      
-      try {
-        const { error: supabaseError } = await supabase
-          .from('leads')
-          .insert([
-            {
-              name: formData.name,
-              email: formData.email,
-              phone: formData.phone,
-              service: formData.service,
-              budget: formData.budget,
-              timeline: formData.timeline,
-              message: formData.message,
-              status: 'new'
-            }
-          ]);
-
-        if (supabaseError) throw supabaseError;
-
-        if (EMAILJS_SERVICE_ID !== 'service_placeholder') {
-          await emailjs.send(
-            EMAILJS_SERVICE_ID,
-            EMAILJS_TEMPLATE_ID,
-            {
-              from_name: formData.name,
-              from_email: formData.email,
-              phone_number: formData.phone,
-              service: formData.service,
-              budget: formData.budget,
-              timeline: formData.timeline,
-              message: formData.message,
-              to_name: 'Admin', 
-            }
-          );
-
-          if (EMAILJS_AUTO_REPLY_TEMPLATE_ID !== 'template_auto_reply_placeholder') {
-            await emailjs.send(
-              EMAILJS_SERVICE_ID,
-              EMAILJS_AUTO_REPLY_TEMPLATE_ID,
-              {
-                to_name: formData.name,
-                to_email: formData.email,
-                service: formData.service,
-              }
-            );
-          }
-        }
-
-        success("Message sent successfully! We'll be in touch soon.");
-        setSubmitted(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      } catch (err: any) {
-        console.error('Error submitting form:', err);
-        showError('Something went wrong. Please try again later.');
-      } finally {
-        setIsSubmitting(false);
+      if (EMAILJS_SERVICE_ID !== 'service_placeholder') {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, { 
+          ...submissionData, 
+          to_name: 'Admin',
+          budget: finalBudget 
+        });
       }
-    }
-  };
 
-  const handleReset = () => {
-    setSubmitted(false);
-    setFormData({ name: '', email: '', phone: '', service: 'Web Development', budget: '$5k - $10k', timeline: 'Within 1 month', message: '' });
-    setTouched({ name: false, email: false, phone: false, message: false });
-    setErrors({});
-  };
-
-  const getInputClasses = (fieldName: keyof FormErrors) => {
-    const baseClasses = "w-full px-4 py-3 rounded-lg border outline-none transition-all duration-200";
-    const errorClasses = "border-red-300 bg-red-50 focus:ring-2 focus:ring-red-200 focus:border-red-400";
-    const normalClasses = "border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white";
-    
-    return `${baseClasses} ${errors[fieldName] && touched[fieldName] ? errorClasses : normalClasses}`;
+      success("Project brief received! Our engineering team will review it.");
+      setSubmitted(true);
+    } catch (err) { showError('Submission failed. Please try again.'); }
+    finally { setIsSubmitting(false); }
   };
 
   return (
-    <div className="pt-24 pb-20">
-      <SEO 
-        title="Contact Us" 
-        description="Get in touch with HyperBuild Labs. Book a free consultation for your next web or AI project." 
-      />
-
+    <div className="pt-24 pb-20 bg-slate-50">
+      <SEO title="Get a Quote" description="Contact HyperBuild Labs for AI and Web Development quotes." />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-brand-600 to-brand-800 rounded-2xl p-8 mb-16 text-white shadow-xl">
-          <div className="flex flex-col md:flex-row items-center justify-between mb-6 md:mb-0">
-            <div className="mb-6 md:mb-0 md:mr-8">
-               <div className="flex items-center mb-2">
-                  <Calendar className="w-6 h-6 mr-3 text-brand-200" aria-hidden="true" />
-                  <h3 className="text-2xl font-bold">Skip the email tag.</h3>
-               </div>
-               <p className="text-brand-100 max-w-xl">
-                 Ready to get started? Book a free 15-minute discovery call directly with our lead engineer.
-               </p>
-            </div>
-            <button 
-              onClick={() => setShowBooking(!showBooking)}
-              className="flex-shrink-0 bg-white text-brand-700 hover:bg-brand-50 font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
-            >
-               {showBooking ? 'Hide Calendar' : 'Schedule Discovery Call'}
-            </button>
-          </div>
-          
-          {showBooking && (
-            <div className="mt-8 animate-fadeIn">
-              <BookingSystem />
-            </div>
-          )}
+        
+        <div className="bg-brand-600 rounded-2xl p-10 mb-16 text-white flex flex-col md:flex-row items-center justify-between shadow-2xl relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+           <div className="mb-6 md:mb-0 relative z-10">
+             <h3 className="text-3xl font-black flex items-center gap-3"><Calendar size={32}/> Strategy Consultation</h3>
+             <p className="text-brand-100 font-medium max-w-md mt-2">Book a high-level technical discovery session with our architects.</p>
+           </div>
+           <Button variant="secondary" size="lg" onClick={() => setShowBooking(!showBooking)} className="relative z-10 px-10 shadow-xl">
+             {showBooking ? 'Close Calendar' : 'Check Availability'}
+           </Button>
         </div>
 
+        {showBooking && <div className="mb-16 animate-fadeIn"><BookingSystem /></div>}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          
-          <div>
-            <SectionHeading 
-              title="Request a Quote" 
-              subtitle="Tell us about your project, budget, and timeline. We'll get back to you with a proposal."
-              centered={false}
-            />
-            
+          <div className="animate-fadeIn">
+            <SectionHeading title="Initiate Project" subtitle="Provide your requirements and budget range." centered={false} />
             {submitted ? (
-              <div className="bg-green-50 border border-green-200 text-green-700 p-8 rounded-xl text-center shadow-lg" role="alert">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-green-600" />
+              <Card className="text-center py-20 bg-white shadow-xl rounded-3xl border-brand-100">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle2 size={48} className="text-green-500" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">Message Received!</h3>
-                <p className="mb-6">Thanks for reaching out, {formData.name}. We've sent a confirmation to your email and will be in touch within 24 hours.</p>
-                <button 
-                  onClick={handleReset}
-                  className="text-brand-600 font-bold hover:text-brand-800 underline focus:outline-none"
-                >
-                  Submit another request
-                </button>
-              </div>
+                <h3 className="text-2xl font-black text-slate-900">Brief Received!</h3>
+                <p className="text-slate-500 mt-3 max-w-xs mx-auto">We will get back to you with a roadmap within 12-24 hours.</p>
+                <Button variant="ghost" className="mt-8 font-black" onClick={() => setSubmitted(false)}>Send Another Brief</Button>
+              </Card>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-2xl shadow-lg border border-slate-100">
-                {errors.general && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-center">
-                    <AlertCircle size={16} className="mr-2" />
-                    {errors.general}
+              <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input label="Full Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} error={errors.name} placeholder="John Doe" />
+                  <Input label="Work Email" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} error={errors.email} placeholder="john@company.com" />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider text-[10px]">Service Category</label>
+                    <select className="w-full p-3.5 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-brand-500 outline-none font-medium transition-all" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})}>
+                      <option>AI Chatbots / Agents</option>
+                      <option>Web Development</option>
+                      <option>Business Automation</option>
+                      <option>Full Branding</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider text-[10px]">Budget (Multi-Currency Support)</label>
+                    <select 
+                      className="w-full p-3.5 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-brand-500 outline-none font-medium transition-all" 
+                      value={isCustomBudget ? 'custom' : formData.budget} 
+                      onChange={e => {
+                        if (e.target.value === 'custom') {
+                          setIsCustomBudget(true);
+                        } else {
+                          setIsCustomBudget(false);
+                          setFormData({...formData, budget: e.target.value});
+                        }
+                      }}
+                    >
+                      <option value="$1k - $5k (₹80k - ₹4L)">$1k - $5k (₹80k - ₹4L)</option>
+                      <option value="$5k - $10k (₹4L - ₹8L)">$5k - $10k (₹4L - ₹8L)</option>
+                      <option value="$10k - $25k (₹8L - ₹20L)">$10k - $25k (₹8L - ₹20L)</option>
+                      <option value="$25k+ (₹20L+)">$25k+ (₹20L+)</option>
+                      <option value="custom">Input custom amount...</option>
+                    </select>
+                  </div>
+                </div>
+
+                {isCustomBudget && (
+                  <div className="bg-slate-50 p-4 rounded-xl border border-dashed border-brand-300 animate-fadeIn">
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Custom Budget Allocation</label>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <Input 
+                          type="number" 
+                          placeholder="Amount" 
+                          value={customBudgetAmount} 
+                          onChange={e => setCustomBudgetAmount(e.target.value)}
+                          error={errors.customBudget}
+                          icon={currency === 'USD' ? <DollarSign size={16}/> : <IndianRupee size={16}/>}
+                        />
+                      </div>
+                      <div className="flex bg-white rounded-lg p-1 border border-slate-200 h-[46px]">
+                        <button 
+                          type="button" 
+                          onClick={() => setCurrency('USD')}
+                          className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${currency === 'USD' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
+                        >
+                          USD
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => setCurrency('INR')}
+                          className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${currency === 'INR' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
+                        >
+                          INR
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-                    <input 
-                      type="text" 
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={getInputClasses('name')}
-                      placeholder="John Doe"
-                      disabled={isSubmitting}
-                    />
-                    {errors.name && touched.name && (
-                      <div className="flex items-center mt-1.5 text-red-500 text-sm">
-                        <AlertCircle size={14} className="mr-1.5" />
-                        <span>{errors.name}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1">Mobile Number</label>
-                    <input 
-                      type="tel" 
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={getInputClasses('phone')}
-                      placeholder="+1 (555) 000-0000"
-                      disabled={isSubmitting}
-                    />
-                    {errors.phone && touched.phone && (
-                      <div className="flex items-center mt-1.5 text-red-500 text-sm">
-                        <AlertCircle size={14} className="mr-1.5" />
-                        <span>{errors.phone}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
-                  <input 
-                    type="email" 
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={getInputClasses('email')}
-                    placeholder="john@company.com"
-                    disabled={isSubmitting}
-                  />
-                  {errors.email && touched.email && (
-                    <div className="flex items-center mt-1.5 text-red-500 text-sm">
-                      <AlertCircle size={14} className="mr-1.5" />
-                      <span>{errors.email}</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <label htmlFor="service" className="block text-sm font-medium text-slate-700 mb-1">Service Interested In</label>
-                  <select 
-                    id="service"
-                    name="service"
-                    value={formData.service}
-                    onChange={handleChange}
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none bg-white"
-                  >
-                    <option>Web Development</option>
-                    <option>AI Solutions / Chatbot</option>
-                    <option>E-commerce</option>
-                    <option>Automation</option>
-                    <option>Branding & Design</option>
-                  </select>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5 uppercase tracking-wider text-[10px]">Project Scope</label>
+                  <textarea className="w-full p-4 border border-slate-200 rounded-xl h-40 focus:ring-2 focus:ring-brand-500 outline-none font-medium placeholder:text-slate-400" placeholder="Describe the technical problem we are solving..." value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="budget" className="block text-sm font-medium text-slate-700 mb-1">Estimated Budget</label>
-                    <select 
-                      id="budget"
-                      name="budget"
-                      value={formData.budget}
-                      onChange={handleChange}
-                      disabled={isSubmitting}
-                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-white"
-                    >
-                      <option>&lt; $1k</option>
-                      <option>$1k - $5k</option>
-                      <option>$5k - $10k</option>
-                      <option>$10k - $25k</option>
-                      <option>$25k+</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="timeline" className="block text-sm font-medium text-slate-700 mb-1">Timeline</label>
-                    <select 
-                      id="timeline"
-                      name="timeline"
-                      value={formData.timeline}
-                      onChange={handleChange}
-                      disabled={isSubmitting}
-                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 bg-white"
-                    >
-                      <option>ASAP</option>
-                      <option>Within 1 month</option>
-                      <option>1-3 months</option>
-                      <option>3 months+</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-1">Project Details</label>
-                  <textarea 
-                    id="message"
-                    name="message"
-                    rows={4}
-                    value={formData.message}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={getInputClasses('message')}
-                    placeholder="Tell us a bit about your project goals..."
-                    disabled={isSubmitting}
-                  ></textarea>
-                  {errors.message && touched.message && (
-                    <div className="flex items-center mt-1.5 text-red-500 text-sm">
-                      <AlertCircle size={14} className="mr-1.5" />
-                      <span>{errors.message}</span>
-                    </div>
-                  )}
-                </div>
-
-                <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
-                  {isSubmitting ? 'Sending...' : 'Submit Request'}
-                </Button>
+                <Button type="submit" className="w-full py-4 text-lg font-black shadow-xl shadow-brand-500/20" isLoading={isSubmitting}>Submit Project Brief</Button>
               </form>
             )}
           </div>
 
-          <div className="flex flex-col justify-start">
-            <div className="bg-secondary-900 text-white p-8 rounded-2xl mb-12 shadow-xl">
-              <h3 className="text-xl font-bold mb-6">Contact Information</h3>
-              <div className="space-y-6">
-                 <a href={settings.whatsapp_link} target="_blank" rel="noopener noreferrer" className="flex items-center group cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 rounded-lg p-2 -ml-2 hover:bg-white/5">
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <MessageCircle className="text-white" size={20} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-400">WhatsApp Us</p>
-                      <p className="font-semibold">{settings.contact_phone}</p>
-                    </div>
-                 </a>
-                 <div className="flex items-center p-2 -ml-2">
-                    <div className="w-10 h-10 bg-brand-600 rounded-full flex items-center justify-center mr-4">
-                      <Mail className="text-white" size={20} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-400">Email Us</p>
-                      <p className="font-semibold">{settings.contact_email}</p>
-                    </div>
+          <div className="space-y-8">
+             <div className="bg-secondary-900 text-white p-10 rounded-3xl shadow-2xl relative overflow-hidden group">
+               <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-brand-500/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+               <h3 className="text-2xl font-black mb-6">Global Operations</h3>
+               <p className="text-slate-400 mb-8 text-sm leading-relaxed">We support compliant invoicing in <strong>USD ($)</strong> and <strong>INR (₹)</strong> via Stripe and Razorpay.</p>
+               <div className="space-y-6">
+                 <div className="flex items-center gap-4 group/item">
+                    <div className="p-3 bg-white/5 rounded-xl text-brand-400 group-hover/item:bg-brand-500 group-hover/item:text-white transition-all"><Mail size={20}/></div>
+                    <div><p className="text-[10px] text-slate-500 uppercase font-black">Email</p><p className="font-bold">{settings.contact_email}</p></div>
                  </div>
-                 <div className="flex items-center p-2 -ml-2">
-                    <div className="w-10 h-10 bg-brand-600 rounded-full flex items-center justify-center mr-4">
-                      <MapPin className="text-white" size={20} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-400">Visit Us</p>
-                      <p className="font-semibold">{settings.contact_address}</p>
-                    </div>
+                 <div className="flex items-center gap-4 group/item">
+                    <div className="p-3 bg-white/5 rounded-xl text-brand-400 group-hover/item:bg-brand-500 group-hover/item:text-white transition-all"><Phone size={20}/></div>
+                    <div><p className="text-[10px] text-slate-500 uppercase font-black">Hotline</p><p className="font-bold">{settings.contact_phone}</p></div>
                  </div>
-              </div>
-            </div>
+                 <div className="flex items-center gap-4 group/item">
+                    <div className="p-3 bg-white/5 rounded-xl text-brand-400 group-hover/item:bg-brand-500 group-hover/item:text-white transition-all"><MapPin size={20}/></div>
+                    <div><p className="text-[10px] text-slate-500 uppercase font-black">Headquarters</p><p className="font-bold">{settings.contact_address}</p></div>
+               </div>
+             </div>
+           </div>
 
-            <div>
-              <h3 className="text-2xl font-bold mb-6">Frequently Asked Questions</h3>
-              <div className="space-y-4">
-                {faqs.map((faq, idx) => (
-                  <div key={faq.id || idx} className="border-b border-slate-200 pb-2">
-                    <button 
-                      onClick={() => toggleFaq(idx)}
-                      className="w-full flex justify-between items-center py-4 text-left focus:outline-none focus:text-brand-600 group"
-                    >
-                      <h4 className="font-semibold text-slate-900 group-hover:text-brand-600 transition-colors pr-4">{faq.question}</h4>
-                      <ChevronDown 
-                        className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openFaqIndex === idx ? 'rotate-180 text-brand-500' : ''}`} 
-                      />
-                    </button>
-                    <div 
-                      className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaqIndex === idx ? 'max-h-40 opacity-100 mb-4' : 'max-h-0 opacity-0'}`}
-                    >
-                      <p className="text-slate-600 text-sm leading-relaxed">{faq.answer}</p>
+             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                <h3 className="font-black text-slate-900 mb-6 uppercase tracking-widest text-xs">Engagement FAQs</h3>
+                <div className="space-y-2">
+                  {faqs.slice(0, 5).map((faq, i) => (
+                    <div key={i} className="border-b border-slate-50 last:border-0">
+                      <button onClick={() => setOpenFaqIndex(openFaqIndex === i ? null : i)} className="w-full flex justify-between py-4 text-left font-bold text-slate-700 hover:text-brand-600 transition-colors">
+                        {faq.question}
+                        <ChevronDown className={`transition-transform duration-300 ${openFaqIndex === i ? 'rotate-180 text-brand-500' : 'text-slate-300'}`} />
+                      </button>
+                      {openFaqIndex === i && <p className="text-sm text-slate-500 pb-4 leading-relaxed animate-slideDown">{faq.answer}</p>}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  ))}
+                </div>
+             </div>
           </div>
-
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
 import { Rocket, Lock, Mail, AlertCircle, HelpCircle, ArrowLeft } from 'lucide-react';
@@ -71,9 +72,18 @@ const AdminLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-secondary-900 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-secondary-900 flex flex-col items-center justify-center px-4 relative">
       <SEO title="Admin Login" description="Restricted Access" />
       
+      {/* Back to Home Button */}
+      <Link 
+        to="/" 
+        className="absolute top-8 left-8 text-slate-400 hover:text-white flex items-center gap-2 font-medium transition-colors bg-white/5 px-4 py-2 rounded-full border border-white/10 backdrop-blur-sm group"
+      >
+        <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+        Back to Home
+      </Link>
+
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100 overflow-hidden">
@@ -94,7 +104,7 @@ const AdminLogin: React.FC = () => {
         {mode === 'login' ? (
           <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-slate-400" />
@@ -104,14 +114,14 @@ const AdminLogin: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                     placeholder="admin@agency.com"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Lock className="h-5 w-5 text-slate-400" />
@@ -121,15 +131,15 @@ const AdminLogin: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                     placeholder="••••••••"
                   />
                 </div>
-                <div className="flex justify-end mt-1">
+                <div className="flex justify-end mt-1.5">
                   <button 
                     type="button"
                     onClick={() => setMode('reset')}
-                    className="text-xs text-brand-600 hover:text-brand-700 font-medium"
+                    className="text-xs text-brand-600 hover:text-brand-700 font-bold"
                   >
                     Forgot Password?
                   </button>
@@ -138,30 +148,30 @@ const AdminLogin: React.FC = () => {
 
               {error && (
                 <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg border border-red-100 flex items-center justify-center">
-                  <AlertCircle size={16} className="mr-2" />
+                  <AlertCircle size={16} className="mr-2 flex-shrink-0" />
                   {error}
                 </div>
               )}
 
               <Button 
                 type="submit" 
-                className="w-full justify-center" 
+                className="w-full justify-center py-3.5 text-lg font-bold" 
                 isLoading={isSubmitting}
               >
-                Log In
+                Sign In
               </Button>
               
-              <div className="bg-slate-50 p-4 rounded-lg mt-6 text-xs text-slate-500 text-center border border-slate-100">
-                <p className="flex items-center justify-center font-semibold mb-1 text-slate-700">
+              <div className="bg-slate-50 p-4 rounded-xl mt-6 text-xs text-slate-500 text-center border border-slate-100">
+                <p className="flex items-center justify-center font-bold mb-1 text-slate-700">
                   <HelpCircle size={12} className="mr-1" /> Login Issues?
                 </p>
-                If you are a new team member, ask the Admin to invite your email via the Supabase Dashboard so you can set your password.
+                If you are a new team member, ensure you have received your invite via email or contact your administrator.
               </div>
           </form>
         ) : (
           <form onSubmit={handleResetPassword} className="space-y-6">
              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-slate-400" />
@@ -171,7 +181,7 @@ const AdminLogin: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                     placeholder="admin@agency.com"
                   />
                 </div>
@@ -179,14 +189,14 @@ const AdminLogin: React.FC = () => {
 
               {error && (
                 <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg border border-red-100 flex items-center justify-center">
-                  <AlertCircle size={16} className="mr-2" />
+                  <AlertCircle size={16} className="mr-2 flex-shrink-0" />
                   {error}
                 </div>
               )}
 
               <Button 
                 type="submit" 
-                className="w-full justify-center" 
+                className="w-full justify-center py-3.5" 
                 isLoading={isSubmitting}
               >
                 Send Reset Link
@@ -195,9 +205,9 @@ const AdminLogin: React.FC = () => {
               <button 
                 type="button"
                 onClick={() => setMode('login')}
-                className="w-full flex items-center justify-center text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors"
+                className="w-full flex items-center justify-center text-slate-500 hover:text-slate-700 text-sm font-bold transition-colors"
               >
-                <ArrowLeft size={16} className="mr-1" /> Back to Login
+                <ArrowLeft size={16} className="mr-1.5" /> Back to Login
               </button>
           </form>
         )}
