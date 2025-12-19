@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import SectionHeading from '../components/SectionHeading';
 import ProjectCard from '../components/ProjectCard';
@@ -6,7 +7,7 @@ import { PORTFOLIO } from '../constants';
 import SEO from '../components/SEO';
 import { supabase } from '../lib/supabaseClient';
 import { Project } from '../types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Box } from 'lucide-react';
 
 const Portfolio: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -21,11 +22,14 @@ const Portfolio: React.FC = () => {
         const { data, error } = await supabase
           .from('projects')
           .select('*')
+          .eq('is_active', true)     // Filter: Master toggle must be ON
+          .eq('is_portfolio', true)  // Filter: Must be intended for public site
           .order('created_at', { ascending: false });
         
         if (error) {
           console.error("Supabase error:", error);
-          setProjects(PORTFOLIO);
+          // Fallback static data filter
+          setProjects(PORTFOLIO.filter(p => p.is_active && p.is_portfolio));
         } else {
           // Map DB snake_case to frontend camelCase
           const mappedProjects = (data || []).map((p: any) => ({
@@ -35,11 +39,11 @@ const Portfolio: React.FC = () => {
           }));
           
           // Use Supabase data if available, otherwise fall back to static
-          setProjects(mappedProjects.length > 0 ? [...mappedProjects, ...PORTFOLIO] : PORTFOLIO);
+          setProjects(mappedProjects.length > 0 ? mappedProjects : PORTFOLIO.filter(p => p.is_active && p.is_portfolio));
         }
       } catch (err) {
         console.error("Fetch error:", err);
-        setProjects(PORTFOLIO);
+        setProjects(PORTFOLIO.filter(p => p.is_active && p.is_portfolio));
       } finally {
         setLoading(false);
       }
@@ -61,21 +65,21 @@ const Portfolio: React.FC = () => {
   });
 
   return (
-    <div className="pt-24 pb-20">
+    <div className="pt-24 pb-20 bg-white">
        <SEO 
-         title="Portfolio & Case Studies" 
-         description="View our success stories. Case studies of high-performance websites, AI tools, and automation systems built for modern businesses." 
+         title="Engineering Projects" 
+         description="View our high-performance technical projects. Case studies of enterprise-grade web apps, AI tools, and automation systems." 
        />
        
        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
          <Breadcrumbs 
-           items={[{ label: 'Home', path: '/' }, { label: 'Portfolio' }]} 
+           items={[{ label: 'Home', path: '/' }, { label: 'Projects' }]} 
            className="mb-8"
          />
 
          <SectionHeading 
-           title="Our Work" 
-           subtitle="We don't just promise results; we deliver them. Explore our recent case studies."
+           title="Active Engineering Output" 
+           subtitle="We don't just build websites; we architect business infrastructure. Explore our live technical projects."
          />
          
          {/* Functional Filters */}
@@ -84,10 +88,10 @@ const Portfolio: React.FC = () => {
              <button 
                key={i}
                onClick={() => setActiveFilter(filter)}
-               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+               className={`px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${
                  activeFilter === filter 
-                   ? 'bg-brand-600 text-white shadow-md shadow-brand-500/30' 
-                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                   ? 'bg-brand-600 text-white shadow-xl shadow-brand-500/30' 
+                   : 'bg-slate-50 text-slate-500 border border-slate-100 hover:bg-slate-100'
                }`}
              >
                {filter}
@@ -96,18 +100,20 @@ const Portfolio: React.FC = () => {
          </div>
 
          {loading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="w-10 h-10 animate-spin text-brand-600" />
+            <div className="flex flex-col items-center justify-center py-32 space-y-4">
+              <Loader2 className="w-12 h-12 animate-spin text-brand-600" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Showcase...</p>
             </div>
          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
               {filteredProjects.length > 0 ? (
                 filteredProjects.map(project => (
                   <ProjectCard key={project.id} project={project} />
                 ))
               ) : (
-                <div className="col-span-full text-center py-12 text-slate-500">
-                  No projects found for this category.
+                <div className="col-span-full text-center py-32 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                  <Box className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <p className="font-black text-slate-400 uppercase tracking-widest text-sm">No active showcase projects found.</p>
                 </div>
               )}
            </div>

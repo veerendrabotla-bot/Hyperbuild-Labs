@@ -98,11 +98,21 @@ export const PORTFOLIO: Project[] = [
     status: 'completed',
     // Added mandatory is_portfolio property for public listing
     is_portfolio: true,
+    // Added mandatory is_active property to satisfy Project interface
+    is_active: true,
     results: [
       '40% increase in user retention within 3 months.',
       'Reduced data processing time by 95%.',
       'Secured Series A funding using the new platform metrics.'
-    ]
+    ],
+    // Added missing required enterprise fields
+    total_amount: 15000,
+    paid_amount: 15000,
+    show_repo: false,
+    show_docs: true,
+    show_live: true,
+    show_financials: false,
+    show_lifecycle: true
   },
   {
     id: 'proj-2',
@@ -120,11 +130,21 @@ export const PORTFOLIO: Project[] = [
     status: 'completed',
     // Added mandatory is_portfolio property for public listing
     is_portfolio: true,
+    // Added mandatory is_active property to satisfy Project interface
+    is_active: true,
     results: [
       'Conversion rate jumped from 1.2% to 3.1%.',
       'Mobile load time decreased from 4.5s to 0.9s.',
       'Average Order Value (AOV) increased by 20%.'
-    ]
+    ],
+    // Added missing required enterprise fields
+    total_amount: 8500,
+    paid_amount: 8500,
+    show_repo: false,
+    show_docs: false,
+    show_live: true,
+    show_financials: false,
+    show_lifecycle: true
   },
   {
     id: 'proj-3',
@@ -142,11 +162,21 @@ export const PORTFOLIO: Project[] = [
     status: 'completed',
     // Added mandatory is_portfolio property for public listing
     is_portfolio: true,
+    // Added mandatory is_active property to satisfy Project interface
+    is_active: true,
     results: [
       'Sales team saved 20 hours per week per rep.',
       'Response time dropped from 2 hours to 5 seconds.',
       'Lead qualification accuracy reached 94%.'
-    ]
+    ],
+    // Added missing required enterprise fields
+    total_amount: 4500,
+    paid_amount: 4500,
+    show_repo: true,
+    show_docs: true,
+    show_live: false,
+    show_financials: false,
+    show_lifecycle: true
   },
   {
     id: 'proj-4',
@@ -164,11 +194,21 @@ export const PORTFOLIO: Project[] = [
     status: 'completed',
     // Added mandatory is_portfolio property for public listing
     is_portfolio: true,
+    // Added mandatory is_active property to satisfy Project interface
+    is_active: true,
     results: [
       'Organic traffic increased by 200% in 6 months.',
       'Property inquiries rose by 150%.',
       'Reduced server costs by migrating to serverless architecture.'
-    ]
+    ],
+    // Added missing required enterprise fields
+    total_amount: 12000,
+    paid_amount: 12000,
+    show_repo: false,
+    show_docs: true,
+    show_live: true,
+    show_financials: false,
+    show_lifecycle: true
   }
 ];
 

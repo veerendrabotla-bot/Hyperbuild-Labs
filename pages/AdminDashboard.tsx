@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -103,15 +104,15 @@ const AdminDashboard: React.FC = () => {
               {activeTab === 'home' && <><LayoutDashboard className="text-brand-600"/> Dashboard Overview</>}
               {activeTab === 'leads' && 'Lead Management'}
               {activeTab === 'appointments' && 'Calendar Bookings'}
-              {activeTab === 'blog' && 'Blog Management'}
-              {activeTab === 'projects' && 'Portfolio Management'}
+              {activeTab === 'blog' && 'Insights Management'}
+              {activeTab === 'projects' && 'Project Management'}
               {activeTab === 'settings' && 'System Settings'}
-              {activeTab === 'kanban' && 'Project Tasks'}
+              {activeTab === 'kanban' && 'Task Execution'}
               {activeTab === 'invoices' && 'Invoices & Financials'}
               {activeTab === 'team' && 'Team Management'}
               {activeTab === 'content' && 'Site Content CMS'}
               {activeTab === 'services' && 'Service Offerings'}
-              {activeTab === 'testimonials' && 'Client Testimonials'}
+              {activeTab === 'testimonials' && 'Success Stories'}
               {activeTab === 'faqs' && 'FAQ Management'}
               {activeTab === 'pricing' && 'Pricing Packages'}
             </h1>

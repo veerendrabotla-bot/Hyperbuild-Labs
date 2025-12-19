@@ -32,11 +32,23 @@ export interface Project {
   results?: string[];
   // Delivery & Tracking Fields
   status: 'planning' | 'development' | 'review' | 'completed';
-  is_portfolio: boolean; // TRUE: Shown on website. FALSE: Private tracking only.
+  is_portfolio: boolean; // TRUE: Shown on public website list.
+  is_active: boolean;    // MASTER KILL SWITCH: Hide from portal AND public list if FALSE.
   repo_link?: string;
   documentation_link?: string;
   live_link?: string;
   created_at?: string;
+  
+  // Enterprise Financials
+  total_amount: number;
+  paid_amount: number;
+  
+  // Visibility Toggles (Feature Flags)
+  show_repo: boolean;
+  show_docs: boolean;
+  show_live: boolean;
+  show_financials: boolean;
+  show_lifecycle: boolean;
 }
 
 export interface PricingTier {
