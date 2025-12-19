@@ -10,7 +10,8 @@ import Badge from '../ui/Badge';
 import { 
   Loader2, Edit2, Trash2, Save, Plus, Eye, EyeOff, User, 
   Mail, Globe, AlertCircle, DollarSign, Wallet, Code2, 
-  FileText, CheckCircle, ShieldAlert, Power, Layout, IndianRupee
+  FileText, CheckCircle, ShieldAlert, Power, Layout, IndianRupee,
+  Search as SearchIcon, Hammer, ShieldCheck, Flag
 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -153,6 +154,13 @@ const AdminProjects: React.FC = () => {
     setCurrentProject(prev => ({ ...prev, [field]: !prev[field] }));
   };
 
+  const phases = [
+    { id: 'planning', label: 'Planning', icon: SearchIcon, desc: 'Strategy & Scoping' },
+    { id: 'development', label: 'Development', icon: Hammer, desc: 'Active Engineering' },
+    { id: 'review', label: 'Review', icon: ShieldCheck, desc: 'Audit & QA' },
+    { id: 'completed', label: 'Completed', icon: Flag, desc: 'Handover & Close' },
+  ];
+
   const clientProjects = projects.filter(p => !p.is_portfolio);
   const portfolioProjects = projects.filter(p => p.is_portfolio);
 
@@ -196,7 +204,7 @@ const AdminProjects: React.FC = () => {
         </>
       )}
 
-      {/* Simplified Unified Modal */}
+      {/* Configuration Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Configure Project" size="xl">
         {/* Global Access Switch */}
         <div className={`mb-8 p-6 rounded-2xl border transition-all flex items-center justify-between ${currentProject.is_active ? 'bg-brand-50 border-brand-100' : 'bg-red-50 border-red-100'}`}>
@@ -221,12 +229,12 @@ const AdminProjects: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
            
-           {/* Column 1: Context & Financials */}
+           {/* Column 1: Context & Lifecycle */}
            <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                 <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Context & Core</h5>
+                 <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Project Identity</h5>
                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-slate-500">PUBLIC SITE:</span>
+                    <span className="text-[10px] font-black text-slate-500">PORTFOLIO:</span>
                     <button onClick={() => toggleField('is_portfolio')} className={`p-1 rounded transition-colors ${currentProject.is_portfolio ? 'text-brand-600' : 'text-slate-300'}`}>
                        {currentProject.is_portfolio ? <Eye size={18} /> : <EyeOff size={18} />}
                     </button>
@@ -234,26 +242,56 @@ const AdminProjects: React.FC = () => {
               </div>
               <Input label="Project Name" value={currentProject.title} onChange={e => setCurrentProject({...currentProject, title: e.target.value})} />
               <div className="grid grid-cols-2 gap-4">
-                <Input label="Client Name" value={currentProject.client} onChange={e => setCurrentProject({...currentProject, client: e.target.value})} icon={<User size={14}/>} />
+                <Input label="Client" value={currentProject.client} onChange={e => setCurrentProject({...currentProject, client: e.target.value})} icon={<User size={14}/>} />
                 <Input label="Auth Email" value={currentProject.client_email} onChange={e => setCurrentProject({...currentProject, client_email: e.target.value})} icon={<Mail size={14}/>} />
               </div>
               
+              {/* V2 Project Execution Phase - Visual Status Bar */}
               <div className="pt-4">
-                <div className="flex items-center justify-between mb-2">
-                   <label className="text-sm font-bold text-slate-700">Project Execution Phase</label>
-                   <button onClick={() => toggleField('show_lifecycle')} className={`p-1 rounded transition-colors ${currentProject.show_lifecycle ? 'text-brand-600' : 'text-slate-300'}`}>
-                     {currentProject.show_lifecycle ? <Eye size={16}/> : <EyeOff size={16}/>}
+                <div className="flex items-center justify-between mb-4">
+                   <label className="text-sm font-black text-slate-700 uppercase tracking-widest text-[10px]">Active Execution Phase</label>
+                   <button onClick={() => toggleField('show_lifecycle')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-black uppercase transition-all ${currentProject.show_lifecycle ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-400'}`}>
+                     {currentProject.show_lifecycle ? <><Eye size={12}/> Client Visible</> : <><EyeOff size={12}/> Hidden</>}
                    </button>
                 </div>
-                <select className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-700" value={currentProject.status} onChange={e => setCurrentProject({...currentProject, status: e.target.value as any})}>
-                   <option value="planning">Phase 1: Planning / Setup</option>
-                   <option value="development">Phase 2: Active Build</option>
-                   <option value="review">Phase 3: Quality Audit</option>
-                   <option value="completed">Phase 4: Done / Handover</option>
-                </select>
+                
+                <div className="grid grid-cols-4 gap-2">
+                  {phases.map((phase) => {
+                    const isActive = currentProject.status === phase.id;
+                    const phaseIndex = phases.findIndex(p => p.id === phase.id);
+                    const currentIndex = phases.findIndex(p => p.id === currentProject.status);
+                    const isCompleted = phaseIndex < currentIndex;
+
+                    return (
+                      <button 
+                        key={phase.id}
+                        onClick={() => setCurrentProject({...currentProject, status: phase.id as any})}
+                        className={`group relative flex flex-col items-center p-3 rounded-xl border transition-all duration-300 ${
+                          isActive 
+                            ? 'bg-brand-600 border-brand-600 text-white shadow-lg shadow-brand-200' 
+                            : isCompleted 
+                            ? 'bg-brand-50 border-brand-100 text-brand-600' 
+                            : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                        }`}
+                      >
+                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 transition-transform duration-500 ${isActive ? 'bg-white/20 scale-110' : isCompleted ? 'bg-brand-100' : 'bg-slate-50'}`}>
+                            {isCompleted ? <CheckCircle size={16} strokeWidth={3} /> : <phase.icon size={16} strokeWidth={isActive ? 3 : 2} />}
+                         </div>
+                         <span className="text-[9px] font-black uppercase tracking-tighter text-center leading-none">{phase.label}</span>
+                         {isActive && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full animate-ping"></div>}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3">
+                   <div className="p-1.5 bg-white rounded-lg text-brand-600 shadow-sm"><FileText size={12}/></div>
+                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                     Phase Definition: <span className="text-slate-700">{phases.find(p => p.id === currentProject.status)?.desc}</span>
+                   </p>
+                </div>
               </div>
 
-              {/* Financial Ledger Section */}
+              {/* Financial Ledger */}
               <div className="pt-6 space-y-4">
                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1"><DollarSign size={10}/> Financial Ledger</h5>
@@ -268,12 +306,8 @@ const AdminProjects: React.FC = () => {
                     </div>
                  </div>
                  <div className="grid grid-cols-2 gap-4">
-                    <Input label={`Contract Value (${getCurrencySymbol(currentProject.currency)})`} type="number" value={currentProject.total_amount} onChange={e => setCurrentProject({...currentProject, total_amount: Number(e.target.value)})} icon={currentProject.currency === 'INR' ? <IndianRupee size={14}/> : <DollarSign size={14}/>} />
-                    <Input label={`Paid to Date (${getCurrencySymbol(currentProject.currency)})`} type="number" value={currentProject.paid_amount} onChange={e => setCurrentProject({...currentProject, paid_amount: Number(e.target.value)})} icon={currentProject.currency === 'INR' ? <IndianRupee size={14}/> : <Wallet size={14}/>} />
-                 </div>
-                 <div className="bg-slate-900 p-5 rounded-2xl flex justify-between items-center text-white border border-slate-700">
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Amount Outstanding</span>
-                    <span className="text-2xl font-black text-brand-400">{getCurrencySymbol(currentProject.currency)}{((currentProject.total_amount || 0) - (currentProject.paid_amount || 0)).toLocaleString()}</span>
+                    <Input label={`Total Contract`} type="number" value={currentProject.total_amount} onChange={e => setCurrentProject({...currentProject, total_amount: Number(e.target.value)})} icon={currentProject.currency === 'INR' ? <IndianRupee size={14}/> : <DollarSign size={14}/>} />
+                    <Input label={`Paid to Date`} type="number" value={currentProject.paid_amount} onChange={e => setCurrentProject({...currentProject, paid_amount: Number(e.target.value)})} icon={currentProject.currency === 'INR' ? <IndianRupee size={14}/> : <Wallet size={14}/>} />
                  </div>
               </div>
            </div>
@@ -319,13 +353,6 @@ const AdminProjects: React.FC = () => {
               <div className="pt-6 border-t border-slate-50">
                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Project Showcase Image URL</label>
                  <Input value={currentProject.image} onChange={e => setCurrentProject({...currentProject, image: e.target.value})} icon={<Layout size={14}/>} placeholder="Picsum or CDN URL" />
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-start gap-3">
-                 <AlertCircle className="text-blue-500 mt-0.5" size={16} />
-                 <p className="text-[10px] text-blue-700 font-bold uppercase tracking-tight leading-relaxed">
-                    Eye toggles directly control visibility in the tracking hub. Toggled items are instantly hidden from the client view.
-                 </p>
               </div>
            </div>
         </div>
