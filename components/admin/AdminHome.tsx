@@ -43,7 +43,6 @@ const AdminHome: React.FC = () => {
   const totalLeads = leads?.length || 0;
   const newLeads = leads?.filter(l => l.status === 'new').length || 0;
   
-  // Multi-Currency Revenue
   const calculateRevenue = (status: string) => {
     const usd = (invoices || []).filter(i => i.status === status && i.currency === 'USD').reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
     const inr = (invoices || []).filter(i => i.status === status && i.currency === 'INR').reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
@@ -51,9 +50,7 @@ const AdminHome: React.FC = () => {
   };
 
   const revenuePaid = calculateRevenue('paid');
-  const revenueSent = calculateRevenue('sent');
 
-  // Realistic Pipeline Calculation (Averages of ranges)
   const calculatePipeline = () => {
      let usd = 0;
      let inr = 0;
@@ -61,7 +58,6 @@ const AdminHome: React.FC = () => {
         if (!lead.budget || lead.status === 'closed') return;
         
         const b = lead.budget;
-        // Parse USD
         if (b.includes('$1k - $5k')) usd += 3000;
         else if (b.includes('$5k - $10k')) usd += 7500;
         else if (b.includes('$10k - $25k')) usd += 17500;
@@ -71,7 +67,6 @@ const AdminHome: React.FC = () => {
            if (match) usd += parseInt(match[1]);
         }
 
-        // Parse INR
         if (b.includes('₹80k - ₹4L')) inr += 240000;
         else if (b.includes('₹4L - ₹8L')) inr += 600000;
         else if (b.includes('₹8L - ₹20L')) inr += 1400000;
@@ -117,7 +112,7 @@ const AdminHome: React.FC = () => {
         <ActionButton label="Sync Calendar" icon={<Calendar size={18}/>} onClick={() => setSearchParams({ tab: 'appointments' })} color="orange" />
       </div>
 
-      {/* Global Ledger Stats */}
+      {/* Global Ledger Stats - UPDATED FOR READABILITY */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <HomeStatCard 
           label="Settled Cash (Revenue)" 
@@ -135,8 +130,8 @@ const AdminHome: React.FC = () => {
         />
         <Card className="flex flex-col justify-between border-slate-200">
            <div className="flex justify-between items-start">
-              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Growth Funnel</p>
-              <div className="p-2 bg-slate-50 rounded-lg text-slate-400"><Users size={18} /></div>
+              <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Growth Funnel</p>
+              <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Users size={18} /></div>
            </div>
            <div className="mt-4">
               <h3 className="text-3xl font-black text-slate-900">{totalLeads}</h3>
@@ -148,8 +143,8 @@ const AdminHome: React.FC = () => {
         </Card>
         <Card className="flex flex-col justify-between border-slate-200">
            <div className="flex justify-between items-start">
-              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Active Schedule</p>
-              <div className="p-2 bg-slate-50 rounded-lg text-slate-400"><Calendar size={18} /></div>
+              <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Active Schedule</p>
+              <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Calendar size={18} /></div>
            </div>
            <div className="mt-4">
               <h3 className="text-3xl font-black text-slate-900">
@@ -162,14 +157,13 @@ const AdminHome: React.FC = () => {
 
       {/* Analytics & Invoices Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Column */}
         <div className="lg:col-span-2 space-y-8">
           <Card className="h-80 flex flex-col border-slate-200" noPadding>
              <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
                 <h3 className="font-black text-slate-900 text-[11px] uppercase tracking-widest flex items-center gap-2">
                   <BarChart3 size={16} className="text-brand-600" /> Marketing Lead Velocity
                 </h3>
-                <Badge variant="neutral" className="font-black">6 MONTH LOOKBACK</Badge>
+                <Badge variant="neutral" className="font-black text-slate-600">6 MONTH LOOKBACK</Badge>
              </div>
              <div className="flex-1 p-8 flex items-end justify-between gap-6">
                 {chartData.map((data, idx) => {
@@ -185,14 +179,13 @@ const AdminHome: React.FC = () => {
                             {data.count} hits
                           </div>
                        </div>
-                       <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">{data.month}</span>
+                       <span className="mt-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">{data.month}</span>
                     </div>
                   );
                 })}
              </div>
           </Card>
 
-          {/* Combined Ingress & Recent Invoices */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card noPadding className="border-slate-200">
               <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
@@ -206,13 +199,13 @@ const AdminHome: React.FC = () => {
                   <div key={lead.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                     <div className="flex items-center min-w-0">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mr-3 text-xs font-black ${
-                        lead.status === 'new' ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'bg-slate-100 text-slate-400'
+                        lead.status === 'new' ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'bg-slate-100 text-slate-500'
                       }`}>
                         {lead.name.charAt(0)}
                       </div>
                       <div className="min-w-0">
                         <p className="font-black text-slate-900 text-xs truncate">{lead.name}</p>
-                        <p className="text-[9px] font-black text-slate-400 uppercase truncate">{lead.service}</p>
+                        <p className="text-[9px] font-black text-slate-500 uppercase truncate">{lead.service}</p>
                       </div>
                     </div>
                     <Badge variant={lead.status === 'new' ? 'info' : lead.status === 'closed' ? 'success' : 'warning'} className="text-[9px] px-2 py-0.5">
@@ -234,12 +227,12 @@ const AdminHome: React.FC = () => {
                 {(invoices || []).slice(0, 4).map(inv => (
                   <div key={inv.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                     <div className="flex items-center min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center mr-3 text-slate-400">
+                      <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center mr-3 text-slate-500">
                         <Receipt size={16} />
                       </div>
                       <div className="min-w-0">
                         <p className="font-black text-slate-900 text-xs truncate">{inv.client_name}</p>
-                        <p className="text-[9px] font-black text-slate-500">
+                        <p className="text-[9px] font-black text-slate-600">
                           {inv.currency === 'INR' ? '₹' : '$'}{Number(inv.amount).toLocaleString()}
                         </p>
                       </div>
@@ -254,7 +247,6 @@ const AdminHome: React.FC = () => {
           </div>
         </div>
 
-        {/* Sidebar Column */}
         <div className="lg:col-span-1 space-y-8">
           <Card className="flex flex-col border-slate-200" noPadding>
             <div className="p-6 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center">
@@ -268,7 +260,7 @@ const AdminHome: React.FC = () => {
                 .map(apt => (
                   <div key={apt.id} className="flex items-center p-3.5 bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-brand-200 transition-all group">
                      <div className="bg-slate-50 p-2 rounded-xl border border-slate-100 text-center min-w-[52px] mr-4 group-hover:bg-brand-50 transition-colors">
-                        <div className="text-[8px] text-slate-400 font-black uppercase tracking-widest">{new Date(apt.date).toLocaleDateString('en-US', { month: 'short' })}</div>
+                        <div className="text-[8px] text-slate-500 font-black uppercase tracking-widest">{new Date(apt.date).toLocaleDateString('en-US', { month: 'short' })}</div>
                         <div className="text-xl font-black text-slate-900 leading-none">{new Date(apt.date).getDate()}</div>
                      </div>
                      <div className="flex-1 min-w-0">
@@ -295,7 +287,6 @@ const AdminHome: React.FC = () => {
             </div>
           </Card>
 
-          {/* Quick Notice Card */}
           <Card className="bg-brand-50 border-brand-100 p-6">
              <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-white rounded-lg text-brand-600"><AlertCircle size={18}/></div>
@@ -322,29 +313,30 @@ const ActionButton = ({ label, icon, onClick, color }: { label: string, icon: Re
       {icon}
     </div>
     <div className="min-w-0">
-      <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest truncate">Manage Component</p>
+      <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest truncate">Manage Component</p>
       <p className="font-black text-slate-900 text-[11px] uppercase tracking-tight truncate">{label}</p>
     </div>
   </button>
 );
 
 const HomeStatCard = ({ label, usd, inr, icon, theme }: { label: string, usd: number, inr: number, icon: React.ReactNode, theme: string }) => (
-  <Card className={`relative overflow-hidden border-none ${theme === 'brand' ? 'bg-brand-600 text-white' : 'bg-slate-900 text-white'}`}>
+  <Card className={`relative overflow-hidden border border-slate-200 bg-white transition-all hover:shadow-lg`}>
      <div className="flex justify-between items-start relative z-10">
-        <p className={`text-[10px] font-black uppercase tracking-widest ${theme === 'brand' ? 'text-brand-100' : 'text-slate-400'}`}>{label}</p>
-        <div className={`p-2 rounded-lg ${theme === 'brand' ? 'bg-white/20' : 'bg-white/10'}`}>{icon}</div>
+        <p className={`text-[10px] font-black uppercase tracking-widest text-slate-500`}>{label}</p>
+        <div className={`p-2 rounded-lg ${theme === 'brand' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-600'}`}>{icon}</div>
      </div>
      <div className="mt-4 relative z-10">
         <div className="flex items-baseline gap-2">
-           <span className={`text-[10px] font-black uppercase tracking-widest ${theme === 'brand' ? 'text-brand-200' : 'text-slate-500'}`}>USD:</span>
-           <h3 className="text-2xl font-black">${usd.toLocaleString()}</h3>
+           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">USD:</span>
+           <h3 className="text-2xl font-black text-slate-900">${usd.toLocaleString()}</h3>
         </div>
         <div className="flex items-baseline gap-2 mt-1">
-           <span className={`text-[10px] font-black uppercase tracking-widest ${theme === 'brand' ? 'text-brand-200' : 'text-slate-500'}`}>INR:</span>
-           <p className={`text-lg font-black ${theme === 'brand' ? 'text-brand-200' : 'text-brand-400'}`}>₹{inr.toLocaleString()}</p>
+           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">INR:</span>
+           <p className="text-lg font-black text-brand-600">₹{inr.toLocaleString()}</p>
         </div>
      </div>
-     {theme === 'brand' && <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>}
+     {/* Subtle decorative background element for each theme */}
+     <div className={`absolute top-0 right-0 w-32 h-32 opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 ${theme === 'brand' ? 'bg-brand-500' : 'bg-slate-500'}`}></div>
   </Card>
 );
 

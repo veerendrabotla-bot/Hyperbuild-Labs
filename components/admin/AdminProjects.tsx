@@ -11,12 +11,12 @@ import {
   Loader2, Edit2, Trash2, Save, Plus, Eye, EyeOff, User, 
   Mail, Globe, AlertCircle, DollarSign, Wallet, Code2, 
   FileText, CheckCircle, ShieldAlert, Power, Layout, IndianRupee,
-  Search as SearchIcon, Hammer, ShieldCheck, Flag
+  Search as SearchIcon, Hammer, ShieldCheck, Flag, Share2, Copy, ClipboardCheck
 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
 const AdminProjects: React.FC = () => {
-  const { success, error: showError } = useToast();
+  const { success, error: showError, show } = useToast();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -84,6 +84,64 @@ const AdminProjects: React.FC = () => {
       showError('Database sync failed.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleShareDetailed = async (project: Project) => {
+    const symbol = project.currency === 'INR' ? '₹' : '$';
+    const trackingUrl = `${window.location.origin}/#/track`;
+    const pendingAmount = (project.total_amount || 0) - (project.paid_amount || 0);
+    
+    // Generate the Structured Data String
+    const report = `
+========================================
+🚀 PROJECT INTEL REPORT: ${project.title.toUpperCase()}
+========================================
+
+ID: ${project.id}
+CLIENT: ${project.client || 'N/A'}
+CATEGORY: ${project.category}
+CURRENT PHASE: ${project.status.toUpperCase()}
+
+----------------------------------------
+💰 FINANCIAL LEDGER (${project.currency})
+----------------------------------------
+- Total Contract: ${symbol}${project.total_amount?.toLocaleString()}
+- Settled Amount: ${symbol}${project.paid_amount?.toLocaleString()}
+- Outstanding:    ${symbol}${pendingAmount.toLocaleString()}
+- Status:         ${pendingAmount <= 0 ? 'FULLY SETTLED' : 'PAYMENT PENDING'}
+
+----------------------------------------
+🛠️ ENGINEERING SPECIFICATIONS
+----------------------------------------
+- Tech Stack: ${project.techStack?.join(', ') || 'N/A'}
+- Description: ${project.description || 'N/A'}
+- Live URL:    ${project.live_link || 'Pending Provision'}
+- Repository:  ${project.repo_link || 'Private/Pending'}
+- Docs:        ${project.documentation_link || 'Internal Only'}
+
+----------------------------------------
+📊 MILESTONES & IMPACT
+----------------------------------------
+${project.results?.map(r => `• ${r}`).join('\n') || '• Project in initial phase'}
+
+----------------------------------------
+🔐 CLIENT TRACKING ACCESS
+----------------------------------------
+Portal: ${trackingUrl}
+Authorized Email: ${project.client_email || 'N/A'}
+Authorized Org:   ${project.client || 'N/A'}
+
+========================================
+Generated via HyperBuild Agency OS
+========================================
+    `.trim();
+
+    try {
+      await navigator.clipboard.writeText(report);
+      success('Detailed Project Brief copied to clipboard');
+    } catch (err) {
+      showError('Clipboard access failed');
     }
   };
 
@@ -164,8 +222,6 @@ const AdminProjects: React.FC = () => {
   const clientProjects = projects.filter(p => !p.is_portfolio);
   const portfolioProjects = projects.filter(p => p.is_portfolio);
 
-  const getCurrencySymbol = (cur: string | undefined) => cur === 'INR' ? '₹' : '$';
-
   return (
     <div className="space-y-10 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-8 rounded-3xl border border-slate-200 shadow-sm gap-4">
@@ -188,7 +244,7 @@ const AdminProjects: React.FC = () => {
               <div className="h-px bg-slate-200 flex-1"></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               {clientProjects.map(p => <ProjectEntryCard key={p.id} project={p} isDeleting={deletingId === p.id} onEdit={() => { setCurrentProject(p); setIsModalOpen(true); }} onDelete={() => handleDelete(p.id)} />)}
+               {clientProjects.map(p => <ProjectEntryCard key={p.id} project={p} isDeleting={deletingId === p.id} onEdit={() => { setCurrentProject(p); setIsModalOpen(true); }} onDelete={() => handleDelete(p.id)} onShare={() => handleShareDetailed(p)} />)}
             </div>
           </section>
 
@@ -198,7 +254,7 @@ const AdminProjects: React.FC = () => {
               <div className="h-px bg-slate-200 flex-1"></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               {portfolioProjects.map(p => <ProjectEntryCard key={p.id} project={p} isDeleting={deletingId === p.id} onEdit={() => { setCurrentProject(p); setIsModalOpen(true); }} onDelete={() => handleDelete(p.id)} />)}
+               {portfolioProjects.map(p => <ProjectEntryCard key={p.id} project={p} isDeleting={deletingId === p.id} onEdit={() => { setCurrentProject(p); setIsModalOpen(true); }} onDelete={() => handleDelete(p.id)} onShare={() => handleShareDetailed(p)} />)}
             </div>
           </section>
         </>
@@ -219,12 +275,24 @@ const AdminProjects: React.FC = () => {
                  </p>
               </div>
            </div>
-           <button 
-             onClick={() => toggleField('is_active')}
-             className={`px-6 py-2 rounded-xl font-black text-xs uppercase transition-all shadow-md ${currentProject.is_active ? 'bg-brand-600 text-white hover:bg-brand-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
-           >
-             {currentProject.is_active ? 'ACTIVE' : 'INACTIVE'}
-           </button>
+           <div className="flex items-center gap-3">
+             {currentProject.id && (
+                <button 
+                  onClick={() => handleShareDetailed(currentProject as Project)}
+                  className="p-3 bg-white text-brand-600 border border-brand-200 rounded-xl hover:bg-brand-50 transition-all shadow-sm flex items-center gap-2 group"
+                  title="Copy Structured Brief"
+                >
+                  <ClipboardCheck size={20} />
+                  <span className="text-[10px] font-black uppercase hidden group-hover:block">Copy Data Brief</span>
+                </button>
+             )}
+             <button 
+               onClick={() => toggleField('is_active')}
+               className={`px-6 py-2 rounded-xl font-black text-xs uppercase transition-all shadow-md ${currentProject.is_active ? 'bg-brand-600 text-white hover:bg-brand-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
+             >
+               {currentProject.is_active ? 'ACTIVE' : 'INACTIVE'}
+             </button>
+           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
@@ -246,7 +314,6 @@ const AdminProjects: React.FC = () => {
                 <Input label="Auth Email" value={currentProject.client_email} onChange={e => setCurrentProject({...currentProject, client_email: e.target.value})} icon={<Mail size={14}/>} />
               </div>
               
-              {/* V2 Project Execution Phase - Visual Status Bar */}
               <div className="pt-4">
                 <div className="flex items-center justify-between mb-4">
                    <label className="text-sm font-black text-slate-700 uppercase tracking-widest text-[10px]">Active Execution Phase</label>
@@ -282,12 +349,6 @@ const AdminProjects: React.FC = () => {
                       </button>
                     )
                   })}
-                </div>
-                <div className="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center gap-3">
-                   <div className="p-1.5 bg-white rounded-lg text-brand-600 shadow-sm"><FileText size={12}/></div>
-                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
-                     Phase Definition: <span className="text-slate-700">{phases.find(p => p.id === currentProject.status)?.desc}</span>
-                   </p>
                 </div>
               </div>
 
@@ -349,11 +410,6 @@ const AdminProjects: React.FC = () => {
                     <Input value={currentProject.documentation_link} onChange={e => setCurrentProject({...currentProject, documentation_link: e.target.value})} placeholder="Notion / Google Drive Link" />
                  </div>
               </div>
-
-              <div className="pt-6 border-t border-slate-50">
-                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Project Showcase Image URL</label>
-                 <Input value={currentProject.image} onChange={e => setCurrentProject({...currentProject, image: e.target.value})} icon={<Layout size={14}/>} placeholder="Picsum or CDN URL" />
-              </div>
            </div>
         </div>
         <div className="mt-10 pt-6 border-t flex justify-end gap-3">
@@ -365,13 +421,22 @@ const AdminProjects: React.FC = () => {
   );
 };
 
-const ProjectEntryCard: React.FC<{ project: Project; isDeleting: boolean; onEdit: () => void; onDelete: () => void }> = ({ project, isDeleting, onEdit, onDelete }) => (
+interface ProjectEntryCardProps {
+  project: Project;
+  isDeleting: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onShare: () => void;
+}
+
+const ProjectEntryCard: React.FC<ProjectEntryCardProps> = ({ project, isDeleting, onEdit, onDelete, onShare }) => (
   <Card className={`group overflow-hidden border-slate-200 transition-all duration-300 relative ${isDeleting ? 'opacity-50 grayscale pointer-events-none' : ''} ${!project.is_active ? 'bg-slate-50 grayscale' : 'hover:border-brand-400 hover:shadow-2xl'}`} noPadding>
     <div className="h-40 relative overflow-hidden bg-slate-100">
        <img src={project.image} alt={project.title} className={`w-full h-full object-cover transition-opacity ${!project.is_active ? 'opacity-30' : ''}`} />
        <div className="absolute inset-0 bg-slate-900/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-          <button onClick={onEdit} className="bg-white p-3 rounded-xl text-brand-600 hover:scale-110 active:scale-95 transition-all shadow-xl"><Edit2 size={20}/></button>
-          <button onClick={onDelete} className="bg-white p-3 rounded-xl text-red-600 hover:scale-110 active:scale-95 transition-all shadow-xl"><Trash2 size={20}/></button>
+          <button onClick={onShare} className="bg-white p-3 rounded-xl text-blue-600 hover:scale-110 active:scale-95 transition-all shadow-xl" title="Copy Detailed Brief"><ClipboardCheck size={20}/></button>
+          <button onClick={onEdit} className="bg-white p-3 rounded-xl text-brand-600 hover:scale-110 active:scale-95 transition-all shadow-xl" title="Edit"><Edit2 size={20}/></button>
+          <button onClick={onDelete} className="bg-white p-3 rounded-xl text-red-600 hover:scale-110 active:scale-95 transition-all shadow-xl" title="Delete"><Trash2 size={20}/></button>
        </div>
        <div className="absolute top-3 left-3 flex gap-2">
          <Badge variant={!project.is_active ? 'neutral' : 'info'} className="uppercase font-black text-[9px] tracking-widest border-none bg-brand-600 text-white shadow-lg">
@@ -388,7 +453,7 @@ const ProjectEntryCard: React.FC<{ project: Project; isDeleting: boolean; onEdit
       <h3 className={`font-black truncate mb-1 text-lg ${!project.is_active ? 'text-slate-400' : 'text-slate-900'}`}>{project.title}</h3>
       <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 mb-6">
          <span className="flex items-center gap-1 truncate max-w-[60%]"><User size={10} className="text-brand-500" /> {project.client}</span>
-         <span className="text-brand-600 font-black">{project.currency === 'INR' ? '₹' : '$'}{project.total_amount.toLocaleString()}</span>
+         <span className="text-brand-600 font-black">{project.currency === 'INR' ? '₹' : '$'}{project.total_amount?.toLocaleString()}</span>
       </div>
       
       <div className="grid grid-cols-5 gap-1.5 pt-4 border-t border-slate-50">
