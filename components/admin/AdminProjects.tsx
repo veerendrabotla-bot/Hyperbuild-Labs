@@ -11,7 +11,7 @@ import {
   Loader2, Edit2, Trash2, Save, Plus, Eye, EyeOff, User, 
   Mail, Globe, AlertCircle, DollarSign, Wallet, Code2, 
   FileText, CheckCircle, ShieldAlert, Power, Layout, IndianRupee,
-  Search as SearchIcon, Hammer, ShieldCheck, Flag, Share2, Copy, ClipboardCheck
+  Search as SearchIcon, Hammer, ShieldCheck, Flag, Share2, Copy, ClipboardCheck, X, Target
 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -27,6 +27,7 @@ const AdminProjects: React.FC = () => {
     category: 'Web Development',
     image: 'https://picsum.photos/800/600',
     description: '',
+    impact: '',
     client: '',
     client_email: '',
     status: 'planning',
@@ -47,6 +48,15 @@ const AdminProjects: React.FC = () => {
     results: []
   });
 
+  const [milestoneInput, setMilestoneInput] = useState('');
+
+  const phases = [
+    { id: 'planning', label: 'Strategy', icon: SearchIcon, desc: 'Strategy & Scoping' },
+    { id: 'development', label: 'Engineering', icon: Hammer, desc: 'Active Engineering' },
+    { id: 'review', label: 'QA / Audit', icon: ShieldCheck, desc: 'Audit & QA' },
+    { id: 'completed', label: 'Handover', icon: Flag, desc: 'Handover & Close' },
+  ];
+
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -65,6 +75,7 @@ const AdminProjects: React.FC = () => {
         ...p,
         techStack: p.tech_stack || [],
         results: p.results || [],
+        impact: p.impact || '',
         status: p.status || 'planning',
         is_portfolio: p.is_portfolio ?? false,
         is_active: p.is_active ?? true,
@@ -92,7 +103,19 @@ const AdminProjects: React.FC = () => {
     const trackingUrl = `${window.location.origin}/#/track`;
     const pendingAmount = (project.total_amount || 0) - (project.paid_amount || 0);
     
-    // Generate the Structured Data String
+    // Resolve Readable Phase
+    const currentPhaseLabel = phases.find(p => p.id === project.status)?.label || project.status;
+
+    // Milestones section logic - PRIORITIZE ACTUAL DATA
+    let milestonesText = '';
+    if (project.results && project.results.length > 0) {
+      milestonesText = project.results.map(r => `• ${r}`).join('\n');
+    } else if (project.impact) {
+      milestonesText = `• KEY IMPACT: ${project.impact}`;
+    } else {
+      milestonesText = `• Current Phase: ${currentPhaseLabel}\n• Engineering team finalizing strategy and environment provisioning.`;
+    }
+
     const report = `
 ========================================
 🚀 PROJECT INTEL REPORT: ${project.title.toUpperCase()}
@@ -101,7 +124,7 @@ const AdminProjects: React.FC = () => {
 ID: ${project.id}
 CLIENT: ${project.client || 'N/A'}
 CATEGORY: ${project.category}
-CURRENT PHASE: ${project.status.toUpperCase()}
+CURRENT PHASE: ${currentPhaseLabel.toUpperCase()}
 
 ----------------------------------------
 💰 FINANCIAL LEDGER (${project.currency})
@@ -123,7 +146,7 @@ CURRENT PHASE: ${project.status.toUpperCase()}
 ----------------------------------------
 📊 MILESTONES & IMPACT
 ----------------------------------------
-${project.results?.map(r => `• ${r}`).join('\n') || '• Project in initial phase'}
+${milestonesText}
 
 ----------------------------------------
 🔐 CLIENT TRACKING ACCESS
@@ -145,6 +168,23 @@ Generated via HyperBuild Agency OS
     }
   };
 
+  const handleAddMilestone = () => {
+    if (milestoneInput.trim()) {
+      setCurrentProject(prev => ({
+        ...prev,
+        results: [...(prev.results || []), milestoneInput.trim()]
+      }));
+      setMilestoneInput('');
+    }
+  };
+
+  const handleRemoveMilestone = (index: number) => {
+    setCurrentProject(prev => ({
+      ...prev,
+      results: prev.results?.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSave = async () => {
     if (!currentProject.title || !currentProject.client) {
       showError('Title and Client Name are required');
@@ -156,6 +196,7 @@ Generated via HyperBuild Agency OS
       category: currentProject.category,
       image: currentProject.image,
       description: currentProject.description,
+      impact: currentProject.impact,
       client: currentProject.client,
       client_email: currentProject.client_email,
       status: currentProject.status,
@@ -180,13 +221,27 @@ Generated via HyperBuild Agency OS
       if (currentProject.id) {
         const { error } = await supabase.from('projects').update(payload).eq('id', currentProject.id);
         if (error) throw error;
+        
+        // OPTIMISTIC UPDATE: Sync local state immediately
+        setProjects(prev => prev.map(p => p.id === currentProject.id ? { ...p, ...payload, techStack: payload.tech_stack } : p));
         success('Project record updated');
       } else {
-        const { error } = await supabase.from('projects').insert([payload]);
+        const { data, error } = await supabase.from('projects').insert([payload]).select();
         if (error) throw error;
+        
+        // Add new project to local state
+        if (data && data[0]) {
+           const newProject = { 
+             ...data[0], 
+             techStack: data[0].tech_stack || [], 
+             results: data[0].results || [] 
+           };
+           setProjects(prev => [newProject as Project, ...prev]);
+        }
         success('New project initialized');
       }
       setIsModalOpen(false);
+      // Still re-fetch to ensure database triggers and derived fields are synced
       fetchProjects();
     } catch (error: any) {
       showError(`Error: ${error.message}`);
@@ -212,13 +267,6 @@ Generated via HyperBuild Agency OS
     setCurrentProject(prev => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const phases = [
-    { id: 'planning', label: 'Planning', icon: SearchIcon, desc: 'Strategy & Scoping' },
-    { id: 'development', label: 'Development', icon: Hammer, desc: 'Active Engineering' },
-    { id: 'review', label: 'Review', icon: ShieldCheck, desc: 'Audit & QA' },
-    { id: 'completed', label: 'Completed', icon: Flag, desc: 'Handover & Close' },
-  ];
-
   const clientProjects = projects.filter(p => !p.is_portfolio);
   const portfolioProjects = projects.filter(p => p.is_portfolio);
 
@@ -229,12 +277,12 @@ Generated via HyperBuild Agency OS
            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Project Management</h2>
            <p className="text-sm text-slate-500 font-medium">Control visibility, delivery status, and financial ledgers.</p>
         </div>
-        <Button onClick={() => { setCurrentProject({ title: '', status: 'planning', is_portfolio: false, is_active: true, show_repo: true, show_docs: true, show_live: true, show_financials: true, show_lifecycle: true, total_amount: 0, paid_amount: 0, currency: 'USD' }); setIsModalOpen(true); }} leftIcon={<Plus size={20} />}>
+        <Button onClick={() => { setCurrentProject({ title: '', status: 'planning', is_portfolio: false, is_active: true, show_repo: true, show_docs: true, show_live: true, show_financials: true, show_lifecycle: true, total_amount: 0, paid_amount: 0, currency: 'USD', results: [], techStack: [] }); setIsModalOpen(true); }} leftIcon={<Plus size={20} />}>
           Initiate New Project
         </Button>
       </div>
 
-      {isLoading ? (
+      {isLoading && projects.length === 0 ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-600 w-10 h-10" /></div>
       ) : (
         <>
@@ -352,6 +400,56 @@ Generated via HyperBuild Agency OS
                 </div>
               </div>
 
+              {/* Briefing & Impact Section */}
+              <div className="pt-6 space-y-4">
+                 <div className="border-b border-slate-100 pb-2">
+                    <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Briefing & Impact</h5>
+                 </div>
+                 <div className="space-y-4">
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-slate-500 mb-1 block">Project Summary (Description)</label>
+                      <textarea 
+                        className="w-full h-24 p-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white transition-all outline-none text-sm font-medium"
+                        value={currentProject.description}
+                        onChange={e => setCurrentProject({...currentProject, description: e.target.value})}
+                        placeholder="Briefly describe the engineering scope..."
+                      />
+                    </div>
+                    <Input 
+                      label="Key Impact Statement" 
+                      value={currentProject.impact} 
+                      onChange={e => setCurrentProject({...currentProject, impact: e.target.value})} 
+                      placeholder="e.g. 40% Increase in Retention"
+                      icon={<Target size={14}/>}
+                    />
+                    <div>
+                       <label className="text-[10px] font-black uppercase text-slate-500 mb-2 block">Engineering Milestones (Results)</label>
+                       <div className="flex gap-2 mb-3">
+                         <Input 
+                           value={milestoneInput}
+                           onChange={e => setMilestoneInput(e.target.value)}
+                           onKeyDown={e => e.key === 'Enter' && handleAddMilestone()}
+                           placeholder="Add specific result/milestone..."
+                           className="flex-1"
+                         />
+                         <Button onClick={handleAddMilestone} variant="secondary" size="sm">Add</Button>
+                       </div>
+                       <div className="space-y-2">
+                          {currentProject.results?.map((res, i) => (
+                            <div key={i} className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                               <span className="text-xs font-bold text-slate-600 truncate mr-4 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-brand-500" /> {res}
+                               </span>
+                               <button onClick={() => handleRemoveMilestone(i)} className="text-slate-300 hover:text-red-500 transition-colors">
+                                  <X size={14} />
+                               </button>
+                            </div>
+                          ))}
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
               {/* Financial Ledger */}
               <div className="pt-6 space-y-4">
                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -450,8 +548,8 @@ const ProjectEntryCard: React.FC<ProjectEntryCardProps> = ({ project, isDeleting
        )}
     </div>
     <div className="p-6">
-      <h3 className={`font-black truncate mb-1 text-lg ${!project.is_active ? 'text-slate-400' : 'text-slate-900'}`}>{project.title}</h3>
-      <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 mb-6">
+      <h3 className={`font-black truncate mb-1 text-lg ${!project.is_active ? 'text-slate-500' : 'text-slate-900'}`}>{project.title}</h3>
+      <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500 mb-6">
          <span className="flex items-center gap-1 truncate max-w-[60%]"><User size={10} className="text-brand-500" /> {project.client}</span>
          <span className="text-brand-600 font-black">{project.currency === 'INR' ? '₹' : '$'}{project.total_amount?.toLocaleString()}</span>
       </div>
