@@ -30,7 +30,8 @@ const PartnerDashboard = React.lazy(() => import('./components/admin/PartnerDash
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
-import { SiteSettingsProvider } from './contexts/SiteSettingsContext';
+/* FIX: Added missing SiteSettingsProvider import */
+import { SiteSettingsProvider, useSiteSettings } from './contexts/SiteSettingsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import AnalyticsTracker from './components/AnalyticsTracker';
 import LoadingScreen from './components/ui/LoadingScreen';
@@ -47,7 +48,9 @@ const PartnerDashboardPage = () => {
   return (
     <div className="pt-24 pb-20 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <PartnerDashboard user={user} />
+        <Suspense fallback={<LoadingScreen />}>
+          <PartnerDashboard user={user} />
+        </Suspense>
       </div>
     </div>
   );

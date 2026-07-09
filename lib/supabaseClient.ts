@@ -5,6 +5,21 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants';
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
+ * Diagnostic helper to verify if the Supabase backend is reachable.
+ * Useful for differentiating between 'Invalid Credentials' and 'Project Paused/Blocked'.
+ */
+export const checkSupabaseConnection = async (): Promise<{ ok: boolean; error?: string }> => {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/health`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY }
+    });
+    return { ok: res.ok };
+  } catch (err: any) {
+    return { ok: false, error: err.message };
+  }
+};
+
+/**
  * 🚀 ENTERPRISE DATABASE SCHEMA UPDATE (V3 - RELATIONSHIPS) 🚀
  * 
  * 1. RUN THIS to automate profile creation on signup:

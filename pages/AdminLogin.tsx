@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
-import { Rocket, Lock, Mail, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Rocket, Lock, Mail, AlertCircle, ArrowLeft, WifiOff, RefreshCcw } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
@@ -15,6 +15,7 @@ const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [isNetworkError, setIsNetworkError] = useState(false);
   const [mode, setMode] = useState<'login' | 'reset'>('login');
   
   const { login, user } = useAuth();
@@ -33,23 +34,30 @@ const AdminLogin: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
+    setIsNetworkError(false);
 
     try {
       await login(email, password);
       
-      // Fetch fresh metadata immediately after login
-      const { data: { user: freshUser } } = await supabase.auth.getUser();
+      const { data: { user: freshUser }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      
       const role = freshUser?.user_metadata?.role;
       
       if (role === 'admin') {
         success('Root access granted');
         navigate('/admin/dashboard');
       } else {
-        // Not an admin? Send to partner dashboard where their role is valid
         navigate('/partner/dashboard');
       }
     } catch (err: any) {
-      setError(err.message === 'Invalid login credentials' ? 'Invalid credentials' : err.message);
+      console.error("Admin Login Error:", err);
+      if (err.message === 'NETWORK_UNREACHABLE' || err.message === 'Failed to fetch') {
+        setIsNetworkError(true);
+        setError("Backend Unreachable: The agency infrastructure node cannot reach Supabase. Verify credentials and project status.");
+      } else {
+        setError(err.message === 'Invalid login credentials' ? 'Invalid credentials' : err.message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -142,9 +150,20 @@ const AdminLogin: React.FC = () => {
               </div>
 
               {error && (
-                <div className="text-red-600 text-xs font-bold text-center bg-red-50 p-4 rounded-xl border border-red-100 flex items-center justify-center">
-                  <AlertCircle size={16} className="mr-2 flex-shrink-0" />
-                  {error}
+                <div className={`p-4 rounded-xl border flex flex-col gap-2 ${isNetworkError ? 'bg-orange-50 border-orange-200' : 'bg-red-50 border-red-100'}`}>
+                  <div className="flex items-center">
+                    {isNetworkError ? <WifiOff size={16} className="mr-2 text-orange-600 flex-shrink-0" /> : <AlertCircle size={16} className="mr-2 text-red-600 flex-shrink-0" />}
+                    <span className={`text-xs font-bold ${isNetworkError ? 'text-orange-700' : 'text-red-700'}`}>{error}</span>
+                  </div>
+                  {isNetworkError && (
+                    <button 
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="text-[9px] font-black uppercase tracking-widest text-brand-600 hover:underline flex items-center gap-1 mt-1"
+                    >
+                      <RefreshCcw size={10} /> Retry Handshake
+                    </button>
+                  )}
                 </div>
               )}
 

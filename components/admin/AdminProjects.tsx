@@ -62,7 +62,7 @@ const AdminProjects: React.FC = () => {
   }, []);
 
   const fetchProjects = async () => {
-    setIsLoading(true);
+    if (projects.length === 0) setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('projects')
@@ -103,15 +103,16 @@ const AdminProjects: React.FC = () => {
     const trackingUrl = `${window.location.origin}/#/track`;
     const pendingAmount = (project.total_amount || 0) - (project.paid_amount || 0);
     
-    // Resolve Readable Phase
-    const currentPhaseLabel = phases.find(p => p.id === project.status)?.label || project.status;
+    // Resolve Readable Phase from dynamic state
+    const phaseObj = phases.find(p => p.id === project.status);
+    const currentPhaseLabel = phaseObj ? phaseObj.label : project.status;
 
-    // Milestones section logic - PRIORITIZE ACTUAL DATA
+    // Milestones section logic
     let milestonesText = '';
     if (project.results && project.results.length > 0) {
       milestonesText = project.results.map(r => `• ${r}`).join('\n');
     } else if (project.impact) {
-      milestonesText = `• KEY IMPACT: ${project.impact}`;
+      milestonesText = `• PRIMARY GOAL: ${project.impact}`;
     } else {
       milestonesText = `• Current Phase: ${currentPhaseLabel}\n• Engineering team finalizing strategy and environment provisioning.`;
     }
@@ -162,7 +163,7 @@ Generated via HyperBuild Agency OS
 
     try {
       await navigator.clipboard.writeText(report);
-      success('Detailed Project Brief copied to clipboard');
+      success('Real-time Project Brief copied to clipboard');
     } catch (err) {
       showError('Clipboard access failed');
     }
@@ -222,14 +223,18 @@ Generated via HyperBuild Agency OS
         const { error } = await supabase.from('projects').update(payload).eq('id', currentProject.id);
         if (error) throw error;
         
-        // OPTIMISTIC UPDATE: Sync local state immediately
-        setProjects(prev => prev.map(p => p.id === currentProject.id ? { ...p, ...payload, techStack: payload.tech_stack } : p));
-        success('Project record updated');
+        // REAL-TIME OPTIMISTIC UPDATE
+        setProjects(prev => prev.map(p => 
+          p.id === currentProject.id 
+            ? { ...p, ...payload, techStack: payload.tech_stack } as Project 
+            : p
+        ));
+        
+        success('Project record updated in real-time');
       } else {
         const { data, error } = await supabase.from('projects').insert([payload]).select();
         if (error) throw error;
         
-        // Add new project to local state
         if (data && data[0]) {
            const newProject = { 
              ...data[0], 
@@ -241,7 +246,7 @@ Generated via HyperBuild Agency OS
         success('New project initialized');
       }
       setIsModalOpen(false);
-      // Still re-fetch to ensure database triggers and derived fields are synced
+      // Re-fetch in background to ensure database-level transformations are synced
       fetchProjects();
     } catch (error: any) {
       showError(`Error: ${error.message}`);

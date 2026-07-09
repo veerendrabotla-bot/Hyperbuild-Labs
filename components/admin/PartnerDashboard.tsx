@@ -10,7 +10,8 @@ import Input from '../ui/Input';
 import Modal from '../ui/Modal';
 import { 
   Users, Target, DollarSign, Plus, Briefcase, 
-  TrendingUp, ExternalLink, Zap, RefreshCw, Loader2, Send, LogOut
+  TrendingUp, ExternalLink, Zap, RefreshCw, Loader2, Send, LogOut,
+  FileText, Download, Image as ImageIcon, Layout, ShieldCheck
 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -25,6 +26,7 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ user }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'pipeline' | 'assets'>('pipeline');
   
   const [newLead, setNewLead] = useState({
     name: '',
@@ -84,6 +86,13 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ user }) => {
 
   const earnings = projects.reduce((acc, p) => acc + (p.commission_amount || 0), 0);
 
+  const agencyAssets = [
+    { title: 'Agency Pitch Deck 2024', type: 'PDF', size: '4.2 MB', icon: FileText, color: 'text-red-500' },
+    { title: 'Brand Identity Kit', type: 'ZIP', size: '12.8 MB', icon: ImageIcon, color: 'text-blue-500' },
+    { title: 'AI Solutions One-Pager', type: 'PDF', size: '1.1 MB', icon: Layout, color: 'text-purple-500' },
+    { title: 'Partner Agreement', type: 'DOCX', size: '0.5 MB', icon: ShieldCheck, color: 'text-green-500' },
+  ];
+
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-600 w-12 h-12"/></div>;
 
   return (
@@ -96,13 +105,13 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ user }) => {
            </div>
            <div>
               <h2 className="text-3xl font-black text-slate-900 tracking-tight">Growth Partner Hub</h2>
-              <p className="text-slate-500 font-medium">Verified: <span className="text-brand-600 font-black">{user?.email}</span></p>
+              <p className="text-slate-500 font-medium">Verified ID: <span className="text-brand-600 font-black">{user?.id?.slice(0,8).toUpperCase()}</span></p>
            </div>
         </div>
         
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Button onClick={() => setIsModalOpen(true)} leftIcon={<Plus size={20}/>} className="flex-1 md:flex-none px-10 shadow-brand-500/30">
-            Submit Lead
+            Submit New Lead
           </Button>
           <button 
             onClick={handleSignOut}
@@ -121,57 +130,106 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ user }) => {
         <StatCard title="Total Commissions" count={`$${earnings.toLocaleString()}`} icon={<DollarSign size={20}/>} color="green" subtitle="Authorized Payouts" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Referral Stream */}
-        <Card noPadding className="border-slate-200">
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-             <h3 className="font-black text-slate-900 text-xs uppercase tracking-widest flex items-center gap-2">
-               <TrendingUp size={16} className="text-brand-600"/> Referral Pipeline
-             </h3>
-             <button onClick={fetchPartnerData} className="text-slate-400 hover:text-brand-600 transition-all"><RefreshCw size={14}/></button>
-          </div>
-          <div className="divide-y divide-slate-50">
-            {leads.length === 0 ? (
-              <div className="p-12 text-center text-slate-400 text-xs font-bold uppercase">No referrals found.</div>
-            ) : (
-              leads.map(lead => (
-                <div key={lead.id} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                   <div>
-                      <p className="font-black text-slate-900 text-sm">{lead.name}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">{lead.service}</p>
-                   </div>
-                   <Badge variant={lead.status === 'new' ? 'info' : lead.status === 'closed' ? 'success' : 'warning'} className="uppercase font-black text-[9px] tracking-widest">
-                     {lead.status}
-                   </Badge>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
+      {/* Tabbed Interface */}
+      <div className="space-y-6">
+        <div className="flex gap-4 border-b border-slate-200">
+          <button 
+            onClick={() => setActiveTab('pipeline')}
+            className={`pb-4 px-2 text-xs font-black uppercase tracking-widest relative transition-colors ${activeTab === 'pipeline' ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            Engagement Pipeline
+            {activeTab === 'pipeline' && <div className="absolute bottom-0 left-0 w-full h-1 bg-brand-600 rounded-t-full"></div>}
+          </button>
+          <button 
+            onClick={() => setActiveTab('assets')}
+            className={`pb-4 px-2 text-xs font-black uppercase tracking-widest relative transition-colors ${activeTab === 'assets' ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            Sales Enablement Hub
+            {activeTab === 'assets' && <div className="absolute bottom-0 left-0 w-full h-1 bg-brand-600 rounded-t-full"></div>}
+          </button>
+        </div>
 
-        {/* Portfolio / Closed Deals */}
-        <Card noPadding className="border-slate-200">
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-             <h3 className="font-black text-slate-900 text-xs uppercase tracking-widest flex items-center gap-2">
-               <Briefcase size={16} className="text-brand-600"/> Closed Acquisitions
-             </h3>
-          </div>
-          <div className="divide-y divide-slate-50">
-             {projects.length === 0 ? (
-               <div className="p-12 text-center text-slate-400 text-xs font-bold uppercase">Deals pending closure.</div>
-             ) : (
-               projects.map(p => (
-                 <div key={p.id} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                    <div>
-                       <p className="font-black text-slate-900 text-sm">{p.title}</p>
-                       <p className="text-[10px] text-brand-600 font-black uppercase">Commission: ${p.commission_amount.toLocaleString()}</p>
+        {activeTab === 'pipeline' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card noPadding className="border-slate-200">
+              <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+                <h3 className="font-black text-slate-900 text-xs uppercase tracking-widest flex items-center gap-2">
+                  <TrendingUp size={16} className="text-brand-600"/> Referral Pipeline
+                </h3>
+                <button onClick={fetchPartnerData} className="text-slate-400 hover:text-brand-600 transition-all"><RefreshCw size={14}/></button>
+              </div>
+              <div className="divide-y divide-slate-50 max-h-[400px] overflow-y-auto custom-scrollbar">
+                {leads.length === 0 ? (
+                  <div className="p-12 text-center text-slate-400 text-xs font-bold uppercase">No referrals found.</div>
+                ) : (
+                  leads.map(lead => (
+                    <div key={lead.id} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                      <div>
+                          <p className="font-black text-slate-900 text-sm">{lead.name}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{lead.service} • {new Date(lead.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <Badge variant={lead.status === 'new' ? 'info' : lead.status === 'closed' ? 'success' : 'warning'} className="uppercase font-black text-[9px] tracking-widest">
+                        {lead.status}
+                      </Badge>
                     </div>
-                    <Badge variant="success" className="uppercase font-black text-[9px] tracking-widest">{p.status}</Badge>
-                 </div>
-               ))
-             )}
+                  ))
+                )}
+              </div>
+            </Card>
+
+            <Card noPadding className="border-slate-200">
+              <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+                <h3 className="font-black text-slate-900 text-xs uppercase tracking-widest flex items-center gap-2">
+                  <Briefcase size={16} className="text-brand-600"/> Closed Acquisitions
+                </h3>
+              </div>
+              <div className="divide-y divide-slate-50 max-h-[400px] overflow-y-auto custom-scrollbar">
+                {projects.length === 0 ? (
+                  <div className="p-12 text-center text-slate-400 text-xs font-bold uppercase">Deals pending closure.</div>
+                ) : (
+                  projects.map(p => (
+                    <div key={p.id} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                        <div>
+                          <p className="font-black text-slate-900 text-sm">{p.title}</p>
+                          <p className="text-[10px] text-brand-600 font-black uppercase">Commission: ${p.commission_amount.toLocaleString()}</p>
+                        </div>
+                        <Badge variant="success" className="uppercase font-black text-[9px] tracking-widest">{p.status}</Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
           </div>
-        </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fadeIn">
+             {agencyAssets.map((asset, i) => (
+               <Card key={i} className="hover:border-brand-400 transition-all group relative overflow-hidden" noPadding>
+                  <div className="p-6">
+                    <div className={`${asset.color} mb-4 group-hover:scale-110 transition-transform`}>
+                       <asset.icon size={32} strokeWidth={2.5} />
+                    </div>
+                    <h4 className="font-black text-slate-900 text-sm mb-1 leading-tight">{asset.title}</h4>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{asset.type} • {asset.size}</p>
+                    <button className="mt-6 w-full py-2.5 bg-slate-50 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 group-hover:bg-brand-600 group-hover:text-white transition-all shadow-sm">
+                      <Download size={14}/> Download Asset
+                    </button>
+                  </div>
+                  {/* Decorative background number */}
+                  <span className="absolute -bottom-4 -right-2 text-6xl font-black text-slate-50 group-hover:text-brand-50 transition-colors -z-0 select-none">
+                    0{i+1}
+                  </span>
+               </Card>
+             ))}
+             
+             <Card className="bg-brand-600 border-none flex flex-col justify-center items-center text-center p-8 md:col-span-2">
+                <h4 className="text-white font-black text-xl mb-2">Need Custom Assets?</h4>
+                <p className="text-brand-100 text-sm font-medium mb-6">If you need a specific pitch deck or co-branded collateral, reach out to the admin team.</p>
+                <Button variant="secondary" className="w-full bg-white text-brand-600 hover:bg-brand-50 border-none shadow-xl">
+                  Message Support
+                </Button>
+             </Card>
+          </div>
+        )}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Register Client Referral">

@@ -35,25 +35,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async () => {
     try {
-      const { data: { user: sbUser }, error } = await supabase.auth.getUser();
-      if (error) throw error;
-      
-      // Double check the team_members table for the approval status
-      // because triggers update metadata with a slight delay
-      const { data: memberData } = await supabase
-        .from('team_members')
-        .select('is_approved, role')
-        .eq('id', sbUser?.id)
-        .maybeSingle();
-
-      const baseUser = formatUser(sbUser);
-      if (baseUser && memberData) {
-        baseUser.is_approved = memberData.is_approved;
-        baseUser.role = memberData.role as 'admin' | 'employee';
+      const { data: { user: sbUser }, error: userError } = await supabase.auth.getUser();
+      if (userError || !sbUser) {
+        setUser(null);
+        return;
       }
       
-      setUser(baseUser);
+      try {
+        const { data: memberData } = await supabase
+          .from('team_members')
+          .select('is_approved, role')
+          .eq('id', sbUser.id)
+          .maybeSingle();
+
+        const baseUser = formatUser(sbUser);
+        if (baseUser && memberData) {
+          baseUser.is_approved = memberData.is_approved;
+          baseUser.role = memberData.role as 'admin' | 'employee';
+        }
+        setUser(baseUser);
+      } catch (dbErr) {
+        console.warn("DB check failed during refresh, using metadata fallback:", dbErr);
+        setUser(formatUser(sbUser));
+      }
+      
     } catch (err) {
+      console.error("Auth Refresh failed (likely network):", err);
       setUser(null);
     } finally {
       setLoading(false);
@@ -76,15 +83,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    await refreshUser(); 
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      await refreshUser(); 
+    } catch (err: any) {
+      // Normalize 'Failed to fetch' error
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        throw new Error("NETWORK_UNREACHABLE");
+      }
+      throw err;
+    }
   };
 
   const register = async (email: string, password: string, name: string) => {
-    // We only create the Auth record now.
-    // The Database Trigger (handle_new_user) will automatically create 
-    // the row in the public.team_members table.
     const { error } = await supabase.auth.signUp({
       email,
       password,

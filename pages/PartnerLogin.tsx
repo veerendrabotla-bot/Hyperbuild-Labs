@@ -5,8 +5,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import Button from '../components/Button';
 import Input from '../components/ui/Input';
 import SEO from '../components/SEO';
-import { Lock, Mail, AlertCircle, UserPlus, Zap, Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import { Lock, Mail, AlertCircle, UserPlus, Zap, Loader2, WifiOff, RefreshCcw } from 'lucide-react';
+import { supabase, checkSupabaseConnection } from '../lib/supabaseClient';
 import { useToast } from '../contexts/ToastContext';
 
 const PartnerLogin: React.FC = () => {
@@ -14,6 +14,7 @@ const PartnerLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [isNetworkError, setIsNetworkError] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -23,48 +24,31 @@ const PartnerLogin: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
+    setIsNetworkError(false);
 
     try {
-      // 1. Perform Auth Login
       await login(email, password);
       
-      // 2. Fetch fresh user data
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error("Authentication verification failed.");
+      if (userError || !user) throw userError || new Error("Session verification failed.");
 
-      // 3. CHECK DATABASE FOR SOURCE OF TRUTH (The team_members table)
       const { data: memberData, error: dbError } = await supabase
         .from('team_members')
         .select('role, is_approved')
         .eq('id', user.id)
-        .maybeSingle(); // maybeSingle doesn't error on 0 rows
+        .maybeSingle();
 
-      if (dbError) {
-        console.error("Database check failed:", dbError.message, dbError.details);
-        // If we can't check the DB, fallback to user metadata for safety
-        const metaRole = user.user_metadata?.role;
-        const metaApproved = user.user_metadata?.is_approved === true;
-        
-        if (metaRole === 'admin') { navigate('/admin/dashboard'); return; }
-        if (!metaApproved) {
-          await supabase.auth.signOut();
-          setError(`Security sync error: ${dbError.message}. Contact admin.`);
-          return;
-        }
-      }
+      if (dbError) throw dbError;
 
-      // 4. Resolve Identity
       const role = memberData?.role || user.user_metadata?.role;
       const isApproved = memberData?.is_approved ?? user.user_metadata?.is_approved;
 
-      // 5. Admin Redirect
       if (role === 'admin') {
         success('Admin session verified');
         navigate('/admin/dashboard');
         return;
       }
 
-      // 6. Employee/Partner Approval Check
       if (!isApproved) {
         await supabase.auth.signOut();
         setError("Your account is pending review. You will receive an email once the admin activates your access.");
@@ -76,7 +60,13 @@ const PartnerLogin: React.FC = () => {
       
     } catch (err: any) {
       console.error("Login attempt failed:", err);
-      setError(err.message || 'Invalid credentials');
+      
+      if (err.message === 'NETWORK_UNREACHABLE' || err.message === 'Failed to fetch') {
+        setIsNetworkError(true);
+        setError("Backend Unreachable: The system cannot contact the database. This usually means the Supabase project is paused or your internet is blocked.");
+      } else {
+        setError(err.message || 'Invalid credentials. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -114,13 +104,34 @@ const PartnerLogin: React.FC = () => {
           />
 
           {error && (
-            <div className="text-red-600 text-xs font-bold text-center bg-red-50 p-4 rounded-xl border border-red-100 flex items-start justify-center">
-              <AlertCircle size={16} className="mr-2 flex-shrink-0 mt-0.5" /> 
-              <span>{error}</span>
+            <div className={`p-4 rounded-xl border flex flex-col gap-3 transition-all ${isNetworkError ? 'bg-orange-50 border-orange-100' : 'bg-red-50 border-red-100'}`}>
+              <div className="flex items-start">
+                {isNetworkError ? <WifiOff size={18} className="mr-2 text-orange-600 flex-shrink-0 mt-0.5" /> : <AlertCircle size={18} className="mr-2 text-red-600 flex-shrink-0 mt-0.5" />}
+                <span className={`text-xs font-bold ${isNetworkError ? 'text-orange-700' : 'text-red-700'}`}>{error}</span>
+              </div>
+              
+              {isNetworkError && (
+                <div className="bg-white/50 p-3 rounded-lg border border-orange-200">
+                  <p className="text-[10px] font-black text-orange-800 uppercase mb-2">Troubleshooting Steps:</p>
+                  <ul className="text-[10px] space-y-1 text-orange-700 font-medium list-disc ml-4">
+                    <li>Check if your Supabase project is active/unpaused.</li>
+                    <li>Verify the SUPABASE_URL in constants.tsx.</li>
+                    <li>Disable Ad-blockers or strict Firewalls.</li>
+                    <li>Check your internet connection.</li>
+                  </ul>
+                  <button 
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="mt-3 flex items-center gap-1.5 text-[10px] font-black text-brand-600 uppercase tracking-widest hover:text-brand-700"
+                  >
+                    <RefreshCcw size={12} /> Force Reload Node
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          <Button type="submit" className="w-full py-4 text-lg font-black uppercase tracking-widest" isLoading={isSubmitting}>
+          <Button type="submit" className="w-full py-4 text-lg font-black uppercase tracking-widest shadow-xl shadow-brand-500/20" isLoading={isSubmitting}>
             Unlock Dashboard
           </Button>
           
