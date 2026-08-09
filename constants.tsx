@@ -24,8 +24,8 @@ export const EMAILJS_INVOICE_TEMPLATE_ID = "template_invoice_placeholder"; // In
 export const EMAILJS_PUBLIC_KEY = "public_key_placeholder";
 
 // Supabase Configuration
-export const SUPABASE_URL = "https://wdramugnkamysedaxnjm.supabase.co";
-export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkcmFtdWdua2FteXNlZGF4bmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzOTkyNzksImV4cCI6MjA3OTk3NTI3OX0.EQ-Fh5A5QT9atNT7JqEBFyLkSidmaC6TwGbkT_I7j9c";
+export const SUPABASE_URL = "https://qfzjzavtpmfivvaemkys.supabase.co";
+export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmemp6YXZ0cG1maXZ2YWVta3lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyODQ4NzUsImV4cCI6MjEwMTg2MDg3NX0.aKijTd6gJo7pDEOjdBZmv8EHtT3Dq3FwTqC4c885PFU";
 
 // Google Analytics
 export const GOOGLE_ANALYTICS_ID = "G-XXXXXXXXXX"; // Replace with your Measurement ID
