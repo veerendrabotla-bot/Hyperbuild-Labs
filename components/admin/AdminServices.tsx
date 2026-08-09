@@ -9,6 +9,7 @@ import Badge from '../ui/Badge';
 import { Loader2, Edit2, Trash2, Save, Plus, X, Search } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { iconMap, availableIcons } from '../../utils/iconMap';
+import { SERVICES } from '../../constants';
 
 const AdminServices: React.FC = () => {
   const { success, error: showError } = useToast();
@@ -37,7 +38,8 @@ const AdminServices: React.FC = () => {
       if (error) throw error;
       setServices(data as any[] || []);
     } catch (error) {
-      console.error('Error fetching services:', error);
+      console.warn('Error fetching services, falling back to static services:', error);
+      setServices(SERVICES);
     } finally {
       setLoading(false);
     }
@@ -200,7 +202,7 @@ const AdminServices: React.FC = () => {
                <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
                <select 
                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white"
-                 value={currentService.category}
+                 value={currentService.category || 'AI'}
                  onChange={e => setCurrentService({...currentService, category: e.target.value as any})}
                >
                  <option>AI</option>
@@ -213,7 +215,7 @@ const AdminServices: React.FC = () => {
                <label className="block text-sm font-medium text-slate-700 mb-1.5">Icon</label>
                <select 
                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white"
-                 value={currentService.icon_name}
+                 value={currentService.icon_name || 'Bot'}
                  onChange={e => setCurrentService({...currentService, icon_name: e.target.value})}
                >
                  {availableIcons.map(icon => (
@@ -249,7 +251,7 @@ const AdminServices: React.FC = () => {
              <textarea 
                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-none"
                rows={3}
-               value={currentService.description}
+               value={currentService.description || ''}
                onChange={e => setCurrentService({...currentService, description: e.target.value})}
                placeholder="Describe the service..."
              />

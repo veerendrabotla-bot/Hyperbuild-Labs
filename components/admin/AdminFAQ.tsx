@@ -7,6 +7,7 @@ import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import { Loader2, Edit2, Trash2, Save, Plus, HelpCircle } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
+import { FAQS } from '../../constants';
 
 const AdminFAQ: React.FC = () => {
   const { success, error: showError } = useToast();
@@ -31,7 +32,8 @@ const AdminFAQ: React.FC = () => {
       if (error) throw error;
       setFaqs(data as FaqItem[] || []);
     } catch (error) {
-      console.error('Error fetching FAQs:', error);
+      console.warn('Error fetching FAQs, falling back to static FAQs:', error);
+      setFaqs(FAQS);
     } finally {
       setLoading(false);
     }
@@ -150,7 +152,7 @@ const AdminFAQ: React.FC = () => {
              <textarea 
                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-none"
                rows={4}
-               value={currentFaq.answer}
+               value={currentFaq.answer || ''}
                onChange={e => setCurrentFaq({...currentFaq, answer: e.target.value})}
                placeholder="Enter the answer..."
              />

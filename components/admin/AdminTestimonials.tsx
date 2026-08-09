@@ -7,6 +7,7 @@ import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import { Loader2, Edit2, Trash2, Save, Plus, User, Quote } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
+import { TESTIMONIALS } from '../../constants';
 
 const AdminTestimonials: React.FC = () => {
   const { success, error: showError } = useToast();
@@ -33,7 +34,8 @@ const AdminTestimonials: React.FC = () => {
       if (error) throw error;
       setTestimonials(data as any[] || []);
     } catch (error) {
-      console.error('Error fetching testimonials:', error);
+      console.warn('Error fetching testimonials, falling back to static testimonials:', error);
+      setTestimonials(TESTIMONIALS);
     } finally {
       setLoading(false);
     }
@@ -187,7 +189,7 @@ const AdminTestimonials: React.FC = () => {
              <textarea 
                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-none"
                rows={4}
-               value={currentTestimonial.content}
+               value={currentTestimonial.content || ''}
                onChange={e => setCurrentTestimonial({...currentTestimonial, content: e.target.value})}
                placeholder="They did an amazing job..."
              />

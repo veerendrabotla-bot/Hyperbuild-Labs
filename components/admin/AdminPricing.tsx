@@ -9,6 +9,7 @@ import Input from '../ui/Input';
 import Badge from '../ui/Badge';
 import { Loader2, Edit2, Trash2, Save, Plus, DollarSign, Check, X, IndianRupee } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
+import { PRICING } from '../../constants';
 
 const AdminPricing: React.FC = () => {
   const { success, error: showError } = useToast();
@@ -38,7 +39,8 @@ const AdminPricing: React.FC = () => {
       if (error) throw error;
       setTiers(data as PricingTier[] || []);
     } catch (error) {
-      console.error('Error fetching pricing:', error);
+      console.warn('Error fetching pricing, falling back to static pricing:', error);
+      setTiers(PRICING);
     } finally {
       setLoading(false);
     }
@@ -186,7 +188,7 @@ const AdminPricing: React.FC = () => {
            
            <div>
              <label className="block text-sm font-black text-slate-700 mb-1.5 uppercase text-[10px] tracking-widest">Market Value Proposition</label>
-             <textarea className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-medium text-slate-700 focus:border-brand-400" rows={2} value={currentTier.description} onChange={e => setCurrentTier({...currentTier, description: e.target.value})} placeholder="Describe target audience..." />
+             <textarea className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-medium text-slate-700 focus:border-brand-400" rows={2} value={currentTier.description || ''} onChange={e => setCurrentTier({...currentTier, description: e.target.value})} placeholder="Describe target audience..." />
            </div>
 
            <div>

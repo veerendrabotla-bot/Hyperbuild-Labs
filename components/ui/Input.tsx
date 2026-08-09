@@ -8,7 +8,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   rightIcon?: React.ReactNode;
 }
 
-const Input: React.FC<InputProps> = ({ label, error, icon, rightIcon, type = 'text', className = '', ...props }) => {
+const Input: React.FC<InputProps> = ({ label, error, icon, rightIcon, type = 'text', className = '', value, ...props }) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
@@ -27,6 +27,7 @@ const Input: React.FC<InputProps> = ({ label, error, icon, rightIcon, type = 'te
           className={`w-full rounded-lg border bg-white px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed ${
             icon ? 'pl-10' : ''
           } ${isPassword || rightIcon ? 'pr-10' : ''} ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-slate-200'} ${className}`}
+          value={value ?? ''}
           {...props}
         />
         
